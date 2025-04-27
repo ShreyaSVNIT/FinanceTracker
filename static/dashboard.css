@@ -1,0 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url(dark-gradient.jpg);
+    color: #333;
+}
+
+header {
+    background-color: rgba(168, 216, 234, 0.4);
+    color: #ffffff;
+    padding: 20px;
+    text-align: center;
+}
+
+main {
+    padding: 10px 20px;
+}
+
+.chart-container {
+    width: 85%;
+    margin: 10px auto;
+    padding: 40px 40px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(168, 216, 234, 0.5);
+    transition: ease 0.5s;
+}
+
+/* .chart-container:hover
+{
+    width: 42%;
+    padding: 25px 25px ;
+} */
+
+.container{
+    display: flex;
+    flex-direction: row;
+    /* padding: 50px 50px; */
+    /* background-color: rgb(255, 255, 255); */
+}
+
+.left-chart
+{
+    display: flex;
+    flex-direction: column;
+    margin: 20px auto;
+
+}
+
+.right-chart
+{
+    display: flex;
+    flex-direction: row;
+    margin: auto;
+    padding: 10px 10px;
+    width: 480px;
+    margin-left: 0;
+}
+
+.fields
+{
+    padding: 50px;
+}
+
+.income 
+{
+    width: 150px;
+    padding: 20px 40px;
+    margin: 40px 40px;
+    border-radius: 10px;
+    font-family: fantasy;
+    font-size: larger;
+    background-color: #B5EAD7;
+    color: #333;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.expense
+{
+    width: 150px;
+    padding: 20px 40px;
+    margin: 40px 40px; 
+    border-radius: 10px;
+    font-family: fantasy;
+    font-size: larger;
+    background-color: #FFCAD4;
+    color: #333;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.balance
+{
+    padding: 20px 40px;
+    margin: 40px 40px;
+    background-color: #A8D8EA;
+    border-radius: 10px;
+    color: #333;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: fantasy;
+    font-size: larger;
+}
+
+/* .container:hover
+{
+    width: 42%;
+    padding: 25px 25px ;
+} */
