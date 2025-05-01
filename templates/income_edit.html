@@ -2,44 +2,296 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>FinTech. | Incomes</title>
+    <title>FinTech. | {% if income.id %}Edit{% else %}Add{% endif %} Income</title>
     <link rel="stylesheet" href="{% static './expense.css' %}">
-    
+    <link rel="stylesheet" href="{% static './edit_form.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <a href="/dashboard"><h1>FinTech.</h1></a>
+    <div class="header">
+        <a href="/dashboard"><h1>FinTech.</h1></a>
+    </div>
 
-
-        <h2 style="color: white;">Update Income Details</h2>
-        <form id="incomeDetailsForm" action="/edit-income/{{income.id}}" method="post">
+    <div class="form-container">
+        <h2 class="form-title">{% if income.id %}Update{% else %}Add{% endif %} Income Details</h2>
+        
+        <div class="form-message" id="formMessage"></div>
+        
+        <form id="incomeDetailsForm" action="/edit-income/{{income.id}}" method="post" novalidate>
             {% csrf_token %}
-            <div style="text-align: center;color: white;">
-                <label style="font-size: 2em;" for="name">Name: </label>
-                <input style="width: 30em;" type="text" id="name" name="name" value="{{income.name}}" required><br><br>
-                <label style="font-size: 2em;" for="category">Category: </label>
-                <select  style="width: 30em;height: 3em;" class="custom-select tm-select-accounts" id="category" name="category">
-                    {% for category in categories %}
-                    {% if category == income.category %}
-                    <option value="{{category.id}}" selected>{{category.name}}</option>
-                    {% else %}
-                    <option value="{{category.id}}">{{category.name}}</option>
-                    {% endif %}
-                    {% endfor %}
-                </select><br><br>
-                
-                <label style="font-size: 2em;" for="amount">Amount: </label>
-                <input  style="width: 30em;" type="number" id="amount" name="amount" value="{{income.amount}}" required><br><br>
-                
-                <label style="font-size: 2em;" for="date">Date: </label>
-                <input style="width: 30em;" type="date" id="date" name="date" value="{{income.date}}" required><br><br>
-                
-                <label style="font-size: 2em;" for="note">Note: </label>
-                <textarea style="width: 30em;" id="note" name="note" rows="4">{{income.note}}</textarea><br><br>
-                
+            
+            <div class="form-group">
+                <label for="name" class="required-field">Name</label>
+                <input type="text" id="name" name="name" value="{{income.name}}" 
+                       class="form-control" required minlength="2" maxlength="50"
+                       pattern="[A-Za-z0-9\s\-_.]+"
+                       title="Name can contain letters, numbers, spaces, hyphens, and underscores">
+                <div class="validation-message"></div>
             </div>
-            <input style="font-size: 2em;align-self: center;" type="submit" value="Update" >
+            
+            <div class="form-group">
+                <label for="category" class="required-field">Category</label>
+                <select id="category" name="category" class="form-control" required>
+                    <option value="">Select a category</option>
+                    {% for category in categories %}
+                    <option value="{{category.id}}" {% if category == income.category %}selected{% endif %}>
+                        {{category.name}}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="validation-message"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="amount" class="required-field">Amount</label>
+                <input type="number" id="amount" name="amount" value="{{income.amount}}" 
+                       step="0.01" min="0.01" max="999999999.99" class="form-control" required
+                       pattern="^\d+(\.\d{0,2})?$"
+                       title="Amount must be greater than 0 and have maximum 2 decimal places">
+                <div class="validation-message"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="date" class="required-field">Date</label>
+                <input type="date" id="date" name="date" value="{{income.date|date:'Y-m-d'}}" 
+                       class="form-control" required
+                       title="Date cannot be in the future">
+                <div class="validation-message"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="note" class="required-field">Note</label>
+                <textarea id="note" name="note" class="form-control" 
+                         required minlength="5" maxlength="500"
+                         title="Note must be between 5 and 500 characters">{{income.note}}</textarea>
+                <div class="validation-message"></div>
+                <div class="char-counter">0/500</div>
+            </div>
+            
+            <div class="button-group">
+                <a href="/incomes" class="cancel-btn">Cancel</a>
+                <button type="submit" class="submit-btn">Save Changes</button>
+            </div>
         </form>
+    </div>
 
-    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('incomeDetailsForm');
+        const formMessage = document.getElementById('formMessage');
+        const submitBtn = form.querySelector('.submit-btn');
+        const inputs = form.querySelectorAll('input, select, textarea');
+        let isSubmitting = false;
+
+        // Autofocus on first field
+        form.querySelector('#name').focus();
+
+        // Form validation and submission
+        form.addEventListener('submit', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return;
+            }
+
+            let isValid = true;
+            let firstInvalidField = null;
+            
+            // Clear previous messages
+            formMessage.style.display = 'none';
+            document.querySelectorAll('.validation-message').forEach(msg => {
+                msg.textContent = '';
+                msg.style.display = 'none';
+            });
+            
+            // Validate each required field
+            inputs.forEach(input => {
+                if (!input.checkValidity()) {
+                    isValid = false;
+                    input.classList.add('invalid');
+                    const message = input.parentNode.querySelector('.validation-message');
+                    message.textContent = input.title || 'This field is required';
+                    message.style.display = 'block';
+                    
+                    if (!firstInvalidField) {
+                        firstInvalidField = input;
+                    }
+                } else {
+                    input.classList.remove('invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                formMessage.textContent = "Please fill out all required fields correctly.";
+                formMessage.className = "form-message error";
+                formMessage.style.display = 'block';
+                
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+
+            isSubmitting = true;
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            formMessage.textContent = "Saving changes...";
+            formMessage.className = "form-message";
+            formMessage.style.display = 'block';
+        });
+
+        // Add form reset handling
+        form.addEventListener('reset', function() {
+            isSubmitting = false;
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+            formMessage.style.display = 'none';
+            
+            inputs.forEach(input => {
+                input.classList.remove('invalid', 'valid');
+                const message = input.parentNode.querySelector('.validation-message');
+                if (message) message.style.display = 'none';
+            });
+            
+            // Reset character counter
+            updateCharCounter();
+        });
+
+        // Enhanced real-time validation
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                const message = this.parentNode.querySelector('.validation-message');
+                
+                if (this.checkValidity()) {
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                    message.style.display = 'none';
+                    
+                    // Remove error message if all fields are valid
+                    if (form.checkValidity()) {
+                        formMessage.style.display = 'none';
+                    }
+                } else {
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    message.textContent = this.title || 'This field is required';
+                    message.style.display = 'block';
+                }
+            });
+
+            // Add blur event for additional validation feedback
+            input.addEventListener('blur', function() {
+                if (this.value && !this.checkValidity()) {
+                    this.classList.add('invalid');
+                    const message = this.parentNode.querySelector('.validation-message');
+                    message.textContent = this.title || 'This field is required';
+                    message.style.display = 'block';
+                }
+            });
+        });
+
+        // Character counter for note field
+        const noteField = document.getElementById('note');
+        const charCounter = noteField.parentNode.querySelector('.char-counter');
+
+        function updateCharCounter() {
+            const length = noteField.value.length;
+            charCounter.textContent = `${length}/500`;
+            charCounter.classList.toggle('limit', length >= 490);
+        }
+
+        noteField.addEventListener('input', updateCharCounter);
+        updateCharCounter(); // Initial count
+
+        // Date validation
+        const dateField = document.getElementById('date');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const maxDate = today.toISOString().split('T')[0];
+        dateField.max = maxDate;
+
+        dateField.addEventListener('input', function() {
+            const selectedDate = new Date(this.value);
+            if (selectedDate > today) {
+                this.value = maxDate;
+            }
+        });
+
+        // Amount validation
+        const amountField = document.getElementById('amount');
+        amountField.addEventListener('input', function() {
+            const value = this.value;
+            if (value.includes('.')) {
+                const decimals = value.split('.')[1];
+                if (decimals.length > 2) {
+                    this.value = parseFloat(value).toFixed(2);
+                }
+            }
+        });
+
+        // Reset form state when navigating away
+        window.addEventListener('beforeunload', function() {
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+            isSubmitting = false;
+        });
+
+        // Add keyboard navigation for amount field
+        amountField.addEventListener('keydown', function(e) {
+            // Allow arrow keys to increment/decrement value
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                const step = 0.01;
+                const currentValue = parseFloat(this.value) || 0;
+                this.value = (e.key === 'ArrowUp' ? 
+                    currentValue + step : 
+                    Math.max(0.01, currentValue - step)
+                ).toFixed(2);
+                this.dispatchEvent(new Event('input'));
+            }
+        });
+
+        // Improve mobile experience
+        if ('ontouchstart' in window) {
+            // Prevent zoom on focus for mobile devices
+            const viewport = document.querySelector('meta[name=viewport]');
+            viewport.setAttribute('content', viewport.content + ', maximum-scale=1');
+            
+            // Add touch class for CSS handling
+            document.body.classList.add('touch-device');
+        }
+
+        // Enhance keyboard navigation
+        inputs.forEach(input => {
+            input.addEventListener('keydown', function(e) {
+                // Handle Enter key to move to next field
+                if (e.key === 'Enter' && this.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    const currentIndex = Array.from(inputs).indexOf(this);
+                    const nextInput = inputs[currentIndex + 1];
+                    if (nextInput) nextInput.focus();
+                }
+            });
+        });
+
+        // Add Escape key handler to cancel
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const cancelBtn = document.querySelector('.cancel-btn');
+                if (cancelBtn) cancelBtn.click();
+            }
+        });
+
+        // Show server-side messages
+        {% if messages %}
+            {% for message in messages %}
+                formMessage.textContent = "{{ message }}";
+                formMessage.className = "form-message {{ message.tags }}";
+                formMessage.style.display = 'block';
+            {% endfor %}
+        {% endif %}
+    });
+    </script>
 </body>
 </html>

@@ -1,153 +1,329 @@
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.models import User, auth 
-from datetime import date, datetime, timedelta
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from datetime import datetime, timedelta
 from .models import Expense, Income, IncomeCategory, ExpenseCategory, Account, Budget
+from .forms import IncomeForm, ExpenseForm, IncomeCategoryForm, ExpenseCategoryForm
 # Create your views here.
 
 # Dashboard
 def dashboard(request):
     if request.user.is_authenticated:
-        my_account= Account.objects.get(user=request.user.id)
-        balance= my_account.balance
+        my_account = Account.objects.get(user=request.user.id)
+        balance = my_account.balance
 
-        # Expenses By category
-        out_dict={}
-        my_catg=ExpenseCategory.objects.filter(user=request.user.id)
+        # Get today's date at midnight for consistent queries
+        today = datetime.now().date()
+        ten_days_ago = today - timedelta(days=9)  # For last 10 days including today
+        
+        # For Last 10 days Income Data (using optimized query)
+        incomes_by_day = Income.objects.filter(
+            user=request.user.id,
+            date__gte=ten_days_ago,
+            date__lte=today
+        ).order_by('date')
+
+        # Create a dictionary to store daily totals
+        daily_income_totals = {(ten_days_ago + timedelta(days=i)): 0 for i in range(10)}
+        
+        # Calculate daily totals
+        for income in incomes_by_day:
+            daily_income_totals[income.date] = daily_income_totals.get(income.date, 0) + income.amount
+
+        # Create the final list in chronological order
+        Income_last_10days_amount = [daily_income_totals[ten_days_ago + timedelta(days=i)] for i in range(10)]
+
+        # Last 10 days Expense Data (using the same optimized approach)
+        expenses_by_day = Expense.objects.filter(
+            user=request.user.id,
+            date__gte=ten_days_ago,
+            date__lte=today
+        ).order_by('date')
+
+        # Create a dictionary to store daily totals
+        daily_expense_totals = {(ten_days_ago + timedelta(days=i)): 0 for i in range(10)}
+        
+        # Calculate daily totals
+        for expense in expenses_by_day:
+            daily_expense_totals[expense.date] = daily_expense_totals.get(expense.date, 0) + expense.amount
+
+        # Create the final list in chronological order
+        Expense_last_10days_amount = [daily_expense_totals[ten_days_ago + timedelta(days=i)] for i in range(10)]
+
+        # Category distribution
+        out_dict = {}
+        my_catg = ExpenseCategory.objects.filter(user=request.user.id)
         for catg in my_catg:
-            out_dict[catg.name]=0
+            out_dict[catg.name] = 0
 
-        expenses= Expense.objects.filter(user=request.user.id).order_by('id')
+        expenses = Expense.objects.filter(user=request.user.id).order_by('id')
         for expense in expenses:
-            catg=expense.category
-            pre_amount=expense.amount
-            pre_total=out_dict[catg.name]
-            out_dict[catg.name]=pre_amount+pre_total
-        # create list from above dict
+            catg = expense.category
+            out_dict[catg.name] = out_dict[catg.name] + expense.amount
+
+        # Create list from dict, only including categories with expenses
         catg_list = []
         catg_total_list = []
-        items = out_dict.items()
-        for item in items:
-            catg_list.append(item[0]), catg_total_list.append(item[1])
+        for catg_name, total in out_dict.items():
+            if total > 0:  # Only include categories with expenses
+                catg_list.append(catg_name)
+                catg_total_list.append(total)
 
-
-
-        # For Last 10 days  Income Data
-        Income_last_10days_amount=[]
-        for i in range(10):
-            _10days_income = Income.objects.filter(user=request.user.id,date__gte=date.today()-timedelta(days=i),date__lt=date.today()-timedelta(days=i-1)).order_by("id")
-
-            total_of_aday=0
-            for income in _10days_income:
-                total_of_aday+=income.amount
-            Income_last_10days_amount.append(total_of_aday)
-        Income_last_10days_amount.reverse()
-
-        # Last 10 days Expense Data
-        Expense_last_10days_amount=[]
-        for i in range(10):
-            _10days_expense = Expense.objects.filter(user=request.user.id,date__gte=date.today()-timedelta(days=i),date__lt=date.today()-timedelta(days=i-1)).order_by("id")
-
-            total_of_aday=0
-            for expense in _10days_expense:
-                total_of_aday+=expense.amount
-            Expense_last_10days_amount.append(total_of_aday)
-        Expense_last_10days_amount.reverse()
-
-        # Data Month format list i.e. 03/Feb,..
-        temp_pre_10days_list= [datetime.now().date()-timedelta(days=i) for i in range(10)]
-        pre_10days_list=[]            
+        # Date formatting for x-axis labels
+        temp_pre_10days_list = [ten_days_ago + timedelta(days=i) for i in range(10)]
+        pre_10days_list = []            
+        months = {
+            1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
+            5: "May", 6: "Jun", 7: "Jul", 8: "Aug",
+            9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
+        }
+        
         for i in temp_pre_10days_list:
-            day=i.day
-            if i.month==1:
-                month="Jan"
-            if i.month==2:
-                month="Feb"
-            if i.month==3:
-                month="Mar"
-            if i.month==4:
-                month="Apil"
-            if i.month==5:
-                month="May"
-            if i.month==6:
-                month="June"
-            if i.month==7:
-                month="Jul"
-            if i.month==8:
-                month="Aug"
-            if i.month==9:
-                month="Sept"
-            if i.month==10:
-                month="Oct"
-            if i.month==11:
-                month="Nov"
-            else:
-                month="Dec"
-            pre_10days_list.append(f"{day}{month}")
-        pre_10days_list.reverse()
+            day = i.day
+            month = months[i.month]
+            pre_10days_list.append(f"{day}/{month}")
+        # No need to reverse since we're already building in chronological order
 
+        context = {
+            "balance": balance,
+            "category_list": catg_list,
+            "catg_total_list": catg_total_list,
+            "pre_10days_list": pre_10days_list,
+            "Income_last_10days_amount": Income_last_10days_amount,
+            "Expense_last_10days_amount": Expense_last_10days_amount
+        }
 
-        return render(request,"dashboard.html",{"balance":balance,"category_list":catg_list,"catg_total_list":catg_total_list,"pre_10days_list":pre_10days_list,"Income_last_10days_amount":Income_last_10days_amount,"Expense_last_10days_amount":Expense_last_10days_amount})
+        return render(request, "dashboard.html", context)
     else:
         return redirect("/")
 
 # Income
-def income(request):
-    if request.user.is_authenticated:
+# Income
+@login_required(login_url='/')
+def incomes(request):  # Changed from 'income' to 'incomes' to match URL pattern
+    try:
+        print(f"[DEBUG] ================== INCOME VIEW CALLED ==================")
+        print(f"[DEBUG] Request method: {request.method}")
+        print(f"[DEBUG] User ID: {request.user.id}")
+        
+        # Get categories for this user
+        categories = IncomeCategory.objects.filter(user=request.user)
+        print(f"[DEBUG] Found {categories.count()} categories for user {request.user.id}")
+        
+        # Get incomes for this user
+        incomes = Income.objects.filter(user=request.user).order_by('-date')
+        print(f"[DEBUG] Found {incomes.count()} incomes")
+        
+        if incomes.exists():
+            for income in incomes:
+                try:
+                    category_name = income.category.name if income.category else "None"
+                    print(f"[DEBUG] Income: {income.id}, {income.name}, {income.amount}, Category: {category_name}")
+                except Exception as e:
+                    print(f"[DEBUG] Error accessing income data: {str(e)}")
+                    
+        # Initialize form variable
+        form = IncomeForm()
+                    
         if request.method == "POST":
-            name = request.POST['name']
-            category_id = request.POST.get('category')
-            amount = request.POST['amount']
-            date = request.POST['date']
-            note = request.POST.get('note')
-            category = get_object_or_404(IncomeCategory, user=request.user.id, id=int(category_id))
-
-            my_account = get_object_or_404(Account, user=request.user.id)
-            my_account.balance += float(amount)
-            my_account.save()
-            print("Account Balance Updated!!")
-            # Create Income record
-            Income.objects.create(
-                name=name,
-                user=request.user,
-                category=category,
-                amount=amount,
-                date=date,
-                note=note
-            )
-            return redirect('/incomes')
-
-        incomes_catg = IncomeCategory.objects.filter(user=request.user.id)
-        incomes = Income.objects.filter(user=request.user.id)
-
-        return render(request, "income.html", {"categories": incomes_catg, "incomes": incomes})
-    else:
-        return redirect("/")
+            print(f"[DEBUG] POST request received")
+            print(f"[DEBUG] Raw POST data: {request.POST}")
+            
+            # Validate all required fields are present
+            required_fields = ['name', 'category', 'amount', 'date']
+            missing_fields = []
+            
+            for field in required_fields:
+                if field not in request.POST or not request.POST[field]:
+                    missing_fields.append(field)
+                    print(f"[DEBUG] Missing required field: {field}")
+                    
+            if missing_fields:
+                for field in missing_fields:
+                    messages.error(request, f"Missing required field: {field}")
+                print(f"[DEBUG] Form submission halted due to missing fields: {missing_fields}")
+                return redirect('/incomes')
+            
+            # Create and validate form
+            form = IncomeForm(request.POST)
+            print(f"[DEBUG] Form created, is_bound: {form.is_bound}")
+            
+            if form.is_valid():
+                print(f"[DEBUG] Form is valid")
+                try:
+                    with transaction.atomic():
+                        # Verify category belongs to user
+                        category_id = form.cleaned_data['category'].id
+                        if not IncomeCategory.objects.filter(id=category_id, user=request.user).exists():
+                            error_msg = "Invalid category selected - category doesn't belong to current user"
+                            print(f"[DEBUG] {error_msg}")
+                            messages.error(request, error_msg)
+                            return redirect('/incomes')
+                        
+                        # Create income record
+                        income = form.save(commit=False)
+                        income.user = request.user
+                        
+                        # Get the account and verify it exists
+                        try:
+                            my_account = get_object_or_404(Account, user=request.user)
+                            print(f"[DEBUG] Account found. ID: {my_account.id}, Current balance: {my_account.balance}")
+                        except Exception as acc_error:
+                            print(f"[DEBUG] Account retrieval error: {str(acc_error)}")
+                            messages.error(request, f"Account error: {str(acc_error)}")
+                            return redirect('/incomes')
+                        
+                        # Get amount for logging
+                        amount = form.cleaned_data['amount']
+                        print(f"[DEBUG] Income amount: {amount}")
+                        
+                        # Save the income record
+                        print(f"[DEBUG] About to save income to database")
+                        income.save()
+                        print(f"[DEBUG] Income saved successfully with ID: {income.id}")
+                        
+                        # Update account balance
+                        original_balance = my_account.balance
+                        my_account.balance += float(amount)
+                        my_account.save()
+                        print(f"[DEBUG] Account balance updated: {original_balance} -> {my_account.balance}")
+                        
+                        # Success message and redirect
+                        messages.success(request, f"Income '{income.name}' for {income.amount} added successfully!")
+                        return redirect('/incomes')
+                except Exception as e:
+                    print(f"[DEBUG] Unexpected exception: {str(e)}")
+                    messages.error(request, f"Error adding income: {str(e)}")
+                    return redirect('/incomes')
+            else:
+                print(f"[DEBUG] Form validation failed: {form.errors}")
+                
+                # Add error messages for display
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        error_msg = f"{field}: {error}"
+                        print(f"[DEBUG] Form error: {error_msg}")
+                        messages.error(request, error_msg)
+        
+        # Render the template with context
+        return render(request, "income.html", {
+            "categories": categories,
+            "incomes": incomes,
+            "form": form
+        })
+        
+    except Exception as e:
+        print(f"[DEBUG] Error in income view: {str(e)}")
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('/dashboard')
 
 # Expenses
+@login_required(login_url='/')
 def expenses(request):
-    if request.user.is_authenticated:
-        if request.method=="POST":
-            name=request.POST['name']
-            category_id=request.POST.get('category')
-            amount=request.POST['amount']
-            date=request.POST['date']
-            note=request.POST.get('note')
-            category = ExpenseCategory.objects.get(user=request.user.id,id=int(category_id))
-
-            my_account= Account.objects.get(user=User.objects.get(id = request.user.id))
-            my_account.balance-=float(amount)
-            my_account.save()
-            print("Account Balance Updated!!")
-            # Create Expenses record
-            Expense.objects.create(name=name,user=User.objects.get(id = request.user.id),category=category,amount=amount,date=date,note=note)
-            return redirect('/expenses')
-
-        expenses_catg= ExpenseCategory.objects.filter(user=request.user.id)
-        expenses= Expense.objects.filter(user=request.user.id)
-
-        return render(request,"expense.html",{"categories":expenses_catg,"expenses":expenses})
-    else:
-        return redirect("/")
+    try:
+        # Get user's expense categories
+        categories = ExpenseCategory.objects.filter(user=request.user)
+        
+        # If user has no categories, create a default one
+        if not categories.exists():
+            print(f"No expense categories found for user {request.user.id}, creating default category")
+            ExpenseCategory.objects.create(
+                name="General Expense",
+                user=request.user
+            )
+            categories = ExpenseCategory.objects.filter(user=request.user)
+        
+        # Get user's expenses
+        expenses = Expense.objects.filter(user=request.user).order_by('-date')
+        
+        # Initialize form - this needs to be outside the if/else for request method
+        form = ExpenseForm()
+        
+        # For debugging
+        print(f"Found {categories.count()} categories for user {request.user.id}")
+        print(f"Found {expenses.count()} expense entries")
+        
+        if request.method == "POST":
+            print(f"[DEBUG] POST request received")
+            print(f"[DEBUG] Raw POST data: {request.POST}")
+            
+            # Validate all required fields are present
+            required_fields = ['name', 'category', 'amount', 'date']
+            missing_fields = []
+            
+            for field in required_fields:
+                if field not in request.POST or not request.POST[field]:
+                    missing_fields.append(field)
+                    print(f"[DEBUG] Missing required field: {field}")
+                    
+            if missing_fields:
+                for field in missing_fields:
+                    messages.error(request, f"Missing required field: {field}")
+                print(f"[DEBUG] Form submission halted due to missing fields: {missing_fields}")
+                return redirect('/expenses')
+            
+            # Create and validate form
+            form = ExpenseForm(request.POST)
+            print(f"[DEBUG] Form created, is_bound: {form.is_bound}")
+            
+            if form.is_valid():
+                print(f"[DEBUG] Form is valid")
+                try:
+                    with transaction.atomic():
+                        # Get the account
+                        my_account = get_object_or_404(Account, user=request.user)
+                        print(f"[DEBUG] Account found. ID: {my_account.id}, Balance: {my_account.balance}")
+                        
+                        # Check sufficient balance
+                        amount = form.cleaned_data['amount']
+                        print(f"[DEBUG] Expense amount: {amount}")
+                        
+                        if my_account.balance < amount:
+                            print(f"[DEBUG] Insufficient balance. Required: {amount}, Available: {my_account.balance}")
+                            messages.error(request, f"Insufficient balance. Required: {amount}, Available: {my_account.balance}")
+                            return redirect('/expenses')
+                        
+                        # Create and save expense record
+                        expense = form.save(commit=False)
+                        expense.user = request.user
+                        expense.save()
+                        print(f"[DEBUG] Expense saved with ID: {expense.id}")
+                        
+                        # Update account balance
+                        original_balance = my_account.balance
+                        my_account.balance -= amount
+                        my_account.save()
+                        print(f"[DEBUG] Account balance updated: {original_balance} -> {my_account.balance}")
+                        
+                        messages.success(request, f"Expense '{expense.name}' for {expense.amount} added successfully!")
+                        return redirect('/expenses')
+                except Exception as e:
+                    print(f"[DEBUG] Unexpected exception: {str(e)}")
+                    messages.error(request, f"Error adding expense: {str(e)}")
+                    return redirect('/expenses')
+            else:
+                print(f"[DEBUG] Form validation failed: {form.errors}")
+                
+                # Add error messages for display
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        error_msg = f"{field}: {error}"
+                        print(f"[DEBUG] Form error: {error_msg}")
+                        messages.error(request, error_msg)
+        
+        # Render the template with context
+        return render(request, "expense.html", {
+            "categories": categories,
+            "expenses": expenses,
+            "form": form
+        })
+        
+    except Exception as e:
+        print(f"Error in expense view: {str(e)}")
+        messages.error(request, "An error occurred while loading the expense page. Please try again.")
+        return redirect('/dashboard')
 
 
 # EDIT Income
@@ -160,7 +336,7 @@ def edit_income(request,id):
             amount=request.POST['amount']
             date=request.POST['date']
             note=request.POST.get('note')
-            category = IncomeCategory.objects.get(user=request.user.id,id=int(category_id))
+            category = get_object_or_404(IncomeCategory, id=int(category_id), user=request.user)
 
             # Update Account Balance
             my_account= Account.objects.get(user=User.objects.get(id = request.user.id))
@@ -183,7 +359,7 @@ def edit_income(request,id):
             print("Income Details Updated")
             return redirect("/incomes")
 
-        categories= IncomeCategory.objects.filter(user=request.user.id)
+        categories = IncomeCategory.objects.filter(user=request.user)
         return render(request,"income_edit.html",{"income":income,"categories":categories})
     else:
         return redirect("/")
@@ -261,53 +437,133 @@ def delete_income(request,id):
 # For Report generation
 import csv
 def expense_report(request, duration):
-    if duration=="daily":
-        expenses = Expense.objects.filter(user=request.user.id,date__gte=datetime.now()).order_by("date")
-    elif duration=="weekly":
-        expenses = Expense.objects.filter(user=request.user.id,date__gte=datetime.now()-timedelta(days=7)).order_by("date")
-    elif duration=="monthly":
-        expenses = Expense.objects.filter(user=request.user.id,date__gte=datetime.now()-timedelta(days=30)).order_by("date")
-    else:
-        expenses = Expense.objects.filter(user=request.user.id).order_by("date")  
+    if not request.user.is_authenticated:
+        return redirect("/")
 
-    response = HttpResponse(content_type='text/csv')  
-    response['Content-Disposition'] = f'attachment; filename="Expenses_{duration}_report.csv"'  
-    writer = csv.writer(response)  
-    writer.writerow(["Sr.No.","Name","Category","Amount","Date","Note"]) 
-    counter=1 
-    for expense in expenses:  
-        writer.writerow([counter,expense.name,expense.category,expense.amount,expense.date,expense.note])  
-        counter+=1
+    today = datetime.now().date()
+    
+    if duration == "daily":
+        # Get today's expenses (from start to end of day)
+        start_date = today
+        end_date = today + timedelta(days=1)
+        expenses = Expense.objects.filter(
+            user=request.user.id,
+            date__gte=start_date,
+            date__lt=end_date
+        ).order_by("date")
+    elif duration == "weekly":
+        # Get last 7 days expenses
+        start_date = today - timedelta(days=6)  # Include today
+        expenses = Expense.objects.filter(
+            user=request.user.id,
+            date__gte=start_date,
+            date__lte=today
+        ).order_by("date")
+    elif duration == "monthly":
+        # Get last 30 days expenses
+        start_date = today - timedelta(days=29)  # Include today
+        expenses = Expense.objects.filter(
+            user=request.user.id,
+            date__gte=start_date,
+            date__lte=today
+        ).order_by("date")
+    else:
+        # Get all expenses
+        expenses = Expense.objects.filter(
+            user=request.user.id
+        ).order_by("date")
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="Expenses_{duration}_report.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["Sr.No.", "Name", "Category", "Amount", "Date", "Note"])
+    
+    total_amount = 0
+    for counter, expense in enumerate(expenses, 1):
+        writer.writerow([
+            counter,
+            expense.name,
+            expense.category,
+            expense.amount,
+            expense.date,
+            expense.note
+        ])
+        total_amount += expense.amount
+    
+    # Add total row
+    writer.writerow([])  # Empty row for spacing
+    writer.writerow(["Total", "", "", total_amount, "", ""])
+    
     return response
 
 # For Report generation
 import csv
 def income_report(request, duration):
-    if duration=="daily":
-        incomes = Income.objects.filter(user=request.user.id,date__gte=datetime.now()).order_by("date")
-    elif duration=="weekly":
-        incomes = Income.objects.filter(user=request.user.id,date__gte=datetime.now()-timedelta(days=7)).order_by("date")
-    elif duration=="monthly":
-        incomes = Income.objects.filter(user=request.user.id,date__gte=datetime.now()-timedelta(days=30)).order_by("date")
-    else:
-        incomes = Income.objects.filter(user=request.user.id).order_by("date")
+    if not request.user.is_authenticated:
+        return redirect("/")
 
-    response = HttpResponse(content_type='text/csv')  
-    response['Content-Disposition'] = f'attachment; filename="Incomes_{duration}_report.csv"'  
-    writer = csv.writer(response)  
-    writer.writerow(["Sr.No.","Name","Category","Amount","Date","Note"]) 
-    counter=1 
-    for income in incomes:  
-        writer.writerow([counter,income.name,income.category,income.amount,income.date,income.note])  
-        counter+=1
+    today = datetime.now().date()
+    
+    if duration == "daily":
+        # Get today's incomes (from start to end of day)
+        start_date = today
+        end_date = today + timedelta(days=1)
+        incomes = Income.objects.filter(
+            user=request.user.id,
+            date__gte=start_date,
+            date__lt=end_date
+        ).order_by("date")
+    elif duration == "weekly":
+        # Get last 7 days incomes
+        start_date = today - timedelta(days=6)  # Include today
+        incomes = Income.objects.filter(
+            user=request.user.id,
+            date__gte=start_date,
+            date__lte=today
+        ).order_by("date")
+    elif duration == "monthly":
+        # Get last 30 days incomes
+        start_date = today - timedelta(days=29)  # Include today
+        incomes = Income.objects.filter(
+            user=request.user.id,
+            date__gte=start_date,
+            date__lte=today
+        ).order_by("date")
+    else:
+        # Get all incomes
+        incomes = Income.objects.filter(
+            user=request.user.id
+        ).order_by("date")
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="Incomes_{duration}_report.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["Sr.No.", "Name", "Category", "Amount", "Date", "Note"])
+    
+    total_amount = 0
+    for counter, income in enumerate(incomes, 1):
+        writer.writerow([
+            counter,
+            income.name,
+            income.category,
+            income.amount,
+            income.date,
+            income.note
+        ])
+        total_amount += income.amount
+    
+    # Add total row
+    writer.writerow([])  # Empty row for spacing
+    writer.writerow(["Total", "", "", total_amount, "", ""])
+    
     return response
 
 # Settings
 def settings(request):
     if request.user.is_authenticated:
         profile= User.objects.get(id=request.user.id)
-        expense_categories=ExpenseCategory.objects.filter(user=request.user.id)
-        income_categories=IncomeCategory.objects.filter(user=request.user.id)
+        expense_categories=ExpenseCategory.objects.filter(user=request.user)
+        income_categories=IncomeCategory.objects.filter(user=request.user)
         if request.method== "POST":
             first_name= request.POST['first_name']
             last_name= request.POST['last_name']
@@ -328,28 +584,44 @@ def settings(request):
 
 
 # Add Income category
+@login_required(login_url='/')
 def add_income_category(request):
-    if request.user.is_authenticated:
-        if request.method=="POST":
-            catg_name=request.POST['name']
-            user=User.objects.get(id=request.user.id)
-            IncomeCategory.objects.create(user=user,name=catg_name)
-            print("Category Created")
-        return redirect("/settings")
-    else:
-        return redirect("/")
+    if request.method == "POST":
+        form = IncomeCategoryForm(request.POST)
+        if form.is_valid():
+            try:
+                # Save without committing, then add user
+                category = form.save(commit=False)
+                category.user = request.user
+                category.save()
+                messages.success(request, "Income category created successfully!")
+            except Exception as e:
+                messages.error(request, f"Error creating category: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    return redirect("/settings")
 
-# Add Ecpense category
+# Add Expense category
+@login_required(login_url='/')
 def add_expense_category(request):
-    if request.user.is_authenticated:
-        if request.method=="POST":
-            catg_name=request.POST['name']
-            user=User.objects.get(id=request.user.id)
-            ExpenseCategory.objects.create(user=user,name=catg_name)
-            print("Category Created")
-        return redirect("/settings")
-    else:
-        return redirect("/")
+    if request.method == "POST":
+        form = ExpenseCategoryForm(request.POST)
+        if form.is_valid():
+            try:
+                # Save without committing, then add user
+                category = form.save(commit=False)
+                category.user = request.user
+                category.save()
+                messages.success(request, "Expense category created successfully!")
+            except Exception as e:
+                messages.error(request, f"Error creating category: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    return redirect("/settings")
 
 # Remove expense category
 def remove_expense_category(request,id):
@@ -363,7 +635,7 @@ def remove_expense_category(request,id):
 # Remove Income category
 def remove_income_category(request,id):
     if request.user.is_authenticated:
-        IncomeCategory.objects.get(user=request.user.id,id=id).delete()
+        IncomeCategory.objects.get(id=id).delete()
         print("Category Deleted")
         return redirect("/settings")
     else:
@@ -380,24 +652,51 @@ def index(request):
 # Signup 
 def signup(request):
     if request.method == "POST":
-        first_name= request.POST['first_name']
-        last_name= request.POST['last_name']
-        email= request.POST['email']
-        password= request.POST['password']
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
+        email = request.POST['email']
+        password = request.POST['password']
 
         if User.objects.filter(username=email).exists():
             print("Username is already used")
-            return redirect('/')
-        else:
-            user = User.objects.create_user(username=email,password= password, email=email, first_name=first_name,last_name=last_name)
-            user.save()
-            print("User Account created successfully")
-            # Create Account for users
-            Account.objects.create(user=user,balance=0,details="Primary account for User="+str(user.id),name=f'Account for {user.id}-{first_name}')
-            print("Users Account Created!!")
+            messages.error(request, "Email address already in use. Please login or use a different email.")
             return redirect('/')
         
-    return render(request,"index.html",{})
+        # Create user only if the email doesn't exist
+        user = User.objects.create_user(
+            username=email,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        user.save()
+        print("User Account created successfully")
+        
+        # Create Account for users
+        Account.objects.create(
+            user=user,
+            balance=0,
+            details="Primary account for User="+str(user.id),
+            name=f'Account for {user.id}-{first_name}'
+        )
+        print("Users Account Created!!")
+        
+        # Create default expense categories
+        ExpenseCategory.objects.create(name="General Expense", user=user)
+        ExpenseCategory.objects.create(name="Food", user=user)
+        ExpenseCategory.objects.create(name="Transportation", user=user)
+        print("Default expense categories created")
+        
+        # Create default income categories
+        IncomeCategory.objects.create(name="Salary", user=user)
+        IncomeCategory.objects.create(name="Other Income", user=user)
+        print("Default income categories created")
+        
+        messages.success(request, "Account created successfully! Please login.")
+        return redirect('/')
+        
+    return render(request, "index.html", {})
     
 # Profile
 def profile(request):
@@ -436,9 +735,11 @@ def login(request):
             return redirect("/dashboard")
         else:
             print("Invalid Login details")
+            # Redirect to the index page for authentication failure
             return redirect("/")
     else:
-        return render(request, "/",{})
+        # For GET requests, redirect to the index page instead of trying to render "/"
+        return redirect("/")
 
 
 def logout(request):

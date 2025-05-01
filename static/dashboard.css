@@ -1,110 +1,204 @@
+/* Test modification - 2025-04-28T00:01:37.907539+05:30 */
+/* Common Variables */
+:root {
+    --primary-bg: linear-gradient(to bottom right, #FFD1DC, #E6E6FA);
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --button-primary: rgba(230, 230, 250, 0.7);
+    --button-hover: rgba(255, 209, 220, 0.9);
+    --text-color: #333333;
+    --border-color: #FFB6C1;
+    --shadow-color: rgba(255, 153, 187, 0.8);
+    --success-color: #98FF98;
+    --danger-color: #FFB6C1;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background: url(dark-gradient.jpg);
-    color: #333;
+    background: var(--primary-bg);
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--text-color);
 }
 
 header {
-    background-color: rgba(168, 216, 234, 0.4);
-    color: #ffffff;
+    background-color: rgba(255, 209, 220, 0.4);
+    color: var(--text-color);
     padding: 20px;
     text-align: center;
+    border-bottom: 1px solid var(--border-color);
 }
 
 main {
     padding: 10px 20px;
 }
 
-.chart-container {
-    width: 85%;
-    margin: 10px auto;
-    padding: 40px 40px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(168, 216, 234, 0.5);
-    transition: ease 0.5s;
-}
-
-/* .chart-container:hover
-{
-    width: 42%;
-    padding: 25px 25px ;
-} */
-
-.container{
+.container {
     display: flex;
-    flex-direction: row;
-    /* padding: 50px 50px; */
-    /* background-color: rgb(255, 255, 255); */
+    padding: 20px;
+    gap: 20px;
+    margin-top: 20px;
+    height: calc(100vh - 100px);
 }
 
-.left-chart
-{
+.left-chart {
+    flex: 2;
     display: flex;
     flex-direction: column;
-    margin: 20px auto;
-
+    gap: 20px;
 }
 
-.right-chart
-{
+.right-chart {
+    flex: 1;
     display: flex;
-    flex-direction: row;
-    margin: auto;
-    padding: 10px 10px;
-    width: 480px;
-    margin-left: 0;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.fields
-{
-    padding: 50px;
+.chart-container {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-height: 300px;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
-.income 
-{
-    width: 150px;
-    padding: 20px 40px;
-    margin: 40px 40px;
-    border-radius: 10px;
-    font-family: fantasy;
-    font-size: larger;
-    background-color: #B5EAD7;
-    color: #333;
+.chart-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px var(--shadow-color);
+}
+
+.fields {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    min-height: 200px;
+}
+
+.fields button {
+    width: 100%;
+    padding: 12px;
     border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin: 5px 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.expense
-{
-    width: 150px;
-    padding: 20px 40px;
-    margin: 40px 40px; 
-    border-radius: 10px;
-    font-family: fantasy;
-    font-size: larger;
-    background-color: #FFCAD4;
+.fields button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px var(--shadow-color);
+}
+
+.income {
+    background: #B5EAD7;
+    color: #2c584a;
+}
+
+.expense {
+    background: #FFCAD4;
+    color: #8b4049;
+}
+
+.balance {
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 10px;
     color: #333;
-    border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: var(--button-primary);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 100%;
 }
 
-.balance
-{
-    padding: 20px 40px;
-    margin: 40px 40px;
-    background-color: #A8D8EA;
-    border-radius: 10px;
-    color: #333;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    font-family: fantasy;
-    font-size: larger;
+.balance:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px var(--shadow-color);
 }
 
-/* .container:hover
-{
-    width: 42%;
-    padding: 25px 25px ;
-} */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+    }
+
+    .left-chart, .right-chart {
+        width: 100%;
+    }
+
+    .chart-container {
+        min-height: 250px;
+        padding: 15px;
+    }
+
+    .fields {
+        min-height: 180px;
+        padding: 15px;
+    }
+
+    .balance {
+        font-size: 20px;
+        padding: 12px;
+    }
+}
+
+/* Chart-specific styles */
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 250px;
+}
+
+/* Ensure the donut chart maintains aspect ratio */
+.right-chart .chart-container canvas {
+    max-height: 300px;
+}
+
+/* Animation for charts */
+.chart-container {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Add animation delay for sequential loading */
+.chart-container:nth-child(1) {
+    animation-delay: 0.2s;
+}
+
+.chart-container:nth-child(2) {
+    animation-delay: 0.4s;
+}
+
+.right-chart .chart-container {
+    animation-delay: 0.6s;
+}
+
+.fields {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease 0.8s forwards;
+}

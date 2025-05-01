@@ -1,15 +1,33 @@
+/* Test modification - 2025-04-28T00:01:37.907539+05:30 */
+/* Common Variables */
+:root {
+    --primary-bg: linear-gradient(to bottom right, #FFD1DC, #E6E6FA);
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --button-primary: rgba(230, 230, 250, 0.7);
+    --button-hover: rgba(255, 209, 220, 0.9);
+    --text-color: #333333;
+    --border-color: #FFB6C1;
+    --shadow-color: rgba(255, 153, 187, 0.8);
+    --success-color: #98FF98;
+    --danger-color: #FFB6C1;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background: url(dark-gradient.jpg);
+    background: var(--primary-bg);
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--text-color);
 }
 
 header {
-    background-color: #ffffff44;
-    color: #ffffff;
+    background-color: rgba(255, 209, 220, 0.4);
+    color: var(--text-color);
     padding: 20px;
     text-align: center;
+    border-bottom: 1px solid var(--border-color);
 }
 
 main {
@@ -20,10 +38,15 @@ main {
     width: 85%;
     margin: 10px auto;
     padding: 40px 40px;
-    background-color: rgb(255, 255, 255);
+    background-color: var(--card-bg);
     border-radius: 10px;
-    box-shadow: 0 0 20px;
-    transition: ease 0.5s;
+    box-shadow: 0 0 15px var(--shadow-color);
+    transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px var(--shadow-color);
 }
 
 /* .chart-container:hover
@@ -57,7 +80,7 @@ main {
     margin-left: 0;
 }
 
-.feilds
+.fields
 {
     padding: 50px;
 }
@@ -68,9 +91,19 @@ main {
     padding: 20px 40px;
     margin: 40px 40px;
     border-radius: 10px;
-    font-family: fantasy;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: bold;
     font-size: larger;
-    background-color: #ffffff;
+    background-color: var(--success-color);
+    color: var(--text-color);
+    border: none;
+    box-shadow: 0 0 15px var(--shadow-color);
+    transition: all 0.3s ease;
+}
+
+.income:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px var(--shadow-color);
 }
 
 .expense
@@ -79,20 +112,38 @@ main {
     padding: 20px 40px;
     margin: 40px 40px; 
     border-radius: 10px;
-    font-family: fantasy;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: bold;
     font-size: larger;
-    background-color: #ffffff;
+    background-color: var(--danger-color);
+    color: var(--text-color);
+    border: none;
+    box-shadow: 0 0 15px var(--shadow-color);
+    transition: all 0.3s ease;
+}
 
+.expense:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px var(--shadow-color);
 }
 
 .balance
 {
     padding: 20px 40px;
     margin: 40px 40px;
-    background-color: #ffffff;
+    background-color: var(--button-primary);
     border-radius: 10px;
-    font-family: fantasy;
+    color: var(--text-color);
+    box-shadow: 0 0 15px var(--shadow-color);
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: bold;
     font-size: larger;
+    transition: all 0.3s ease;
+}
+
+.balance:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px var(--shadow-color);
 }
 
 /* .container:hover

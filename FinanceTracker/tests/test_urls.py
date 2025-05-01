@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from django.urls import reverse, resolve
-from FinTech.views import dashboard, income, expenses, edit_income, edit_expense, delete_expense, delete_income, expense_report, income_report, add_expense_category, add_income_category, remove_expense_category, remove_income_category, profile, settings, index, signup, login, logout
+from FinTech.views import dashboard, incomes, expenses, edit_income, edit_expense, delete_expense, delete_income, expense_report, income_report, add_expense_category, add_income_category, remove_expense_category, remove_income_category, profile, settings, index, signup, login, logout
 
 
 
@@ -13,7 +13,7 @@ class TestUrls(SimpleTestCase):
 
     def test_incomes_url(self):
         url = reverse('incomes')
-        self.assertEqual(resolve(url).func, income)
+        self.assertEqual(resolve(url).func, incomes)
         self.assertNotEqual(resolve(url).func, expenses)
 
     def test_expenses_url(self):
@@ -34,7 +34,7 @@ class TestUrls(SimpleTestCase):
 
     def test_remove_Income_url(self):
         url = reverse('remove-income-category', args=[1])
-        self.assertNotEqual(resolve(url).func, income)      
+        self.assertNotEqual(resolve(url).func, incomes)      
         self.assertEqual(resolve(url).func, remove_income_category)   
 
     def test_profile_url(self):

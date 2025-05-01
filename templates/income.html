@@ -3,17 +3,8 @@
 <html>
 <head>
     <title>FinTech. | Incomes</title>
-    <link rel="stylesheet" href="{% static './expense.css' %}">
+    <link rel="stylesheet" href="{% static './income.css' %}">
     <link rel="stylesheet" href="{% static 'nav.css' %}">
-    <style>
-        /* Style for the close button */
-        .close-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
     <nav class="nav">
@@ -24,7 +15,7 @@
              <button class="btn" id="Income" onclick="location.href='/incomes'">Incomes</button>
              <button class="btn" id="Expense" onclick="location.href='/expenses'">Expenses</button>
              <!-- <button class="btn" id="Transaction" onclick="transaction()">Transaction</button> -->
-             <button class="btn" id="Setting" onclick="location.href='/settings'">Settigs</button>
+             <button class="btn" id="Setting" onclick="location.href='/settings'">Settings</button>
          </div>
  
          <div class="nav-logo">
@@ -39,26 +30,44 @@
      </nav>
 
      <br>
-    <!-- Add Income Button -->
-    <button id="addIncomeButton" onclick="showIncomeForm()">Add Income</button>
-
-    <!-- Income Entry Form (Initially Hidden) -->
-    <div id="incomeForm" style="display: none; position: relative;">
+    
+     <br>
+     
+     <!-- Prominent Message Display at the top -->
+     <div id="top-messages-container">
+         {% if messages %}
+         <div class="messages-container">
+             {% for message in messages %}
+             <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                 {{ message }}
+                 <span class="message-close" onclick="this.parentElement.style.display='none';">&times;</span>
+             </div>
+             {% endfor %}
+         </div>
+         {% endif %}
+     </div>
+    
+     <div id="overlay" class="overlay" onclick="closeIncomeForm()"></div>
+    <div id="incomeForm">
         <!-- Close Button -->
         <span class="close-button" onclick="closeIncomeForm()">&#10006;</span>
 
         <h2>Add Income Details</h2>
-        <form id="incomeDetailsForm" action="/incomes" method="post">
+        <form id="incomeDetailsForm" action="/incomes/" method="post" onsubmit="return validateIncomeForm()">
             {% csrf_token %}
+            <!-- CSRF token included above - required for Django form submission -->
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required><br>
 
             <label for="category">Category:</label>
-            <select class="custom-select tm-select-accounts" id="category" name="category">
-                      <option selected>Select category</option>
+            <select class="custom-select tm-select-accounts" id="category" name="category" required>
+                      <option value="">Select category</option>
                       {% for category in categories %}
                       <option value="{{category.id}}">{{category.name}}</option>
                       {% endfor %}
+                      {% if categories.count == 0 %}
+                      <option value="" disabled>No categories available - please add some in Settings</option>
+                      {% endif %}
             </select><br>
 
             <label for="amount">Amount:</label>
@@ -70,106 +79,220 @@
             <label for="note">Note:</label>
             <textarea id="note" name="note" rows="4"></textarea><br>
 
-            <input type="submit" value="Add" >
+            <div class="form-buttons">
+                <input type="submit" value="Add" class="action-button">
+            </div>
         </form>
     </div>
 
     <!-- Display Income Entries in a Table -->
-    <h2 style="color: white;">Income Entries</h2>
+    <h2>Income Entries</h2>
+    <div class="button-container">
+        <button id="addIncomeButton" onclick="showIncomeForm()">Add Income</button>
+    </div>
     <table id="incomeTable" border="1">
-        <tr>
-            <th>Sr.No.</th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>Note</th>
-            <th>Edit</th>
-            <th>Delete</th>
-        </tr>
-        {% for income in incomes %}
-        <tr>
-            <td>{{forloop.counter}}</td>
-            <td>{{income.name}}</td>
-            <td>{{income.category}}</td>
-            <td>{{income.amount}}</td>
-            <td>{{income.date}}</td>
-            <td>{{income.note}}</td>
-            <td>
-                <div class="rem">										
-                    <button type="button" onclick="location.href='/edit-income/{{income.id}}' ">
-                        <span class="glyphicon glyphicon-trash">Edit</span>
-                    </button>
-                </div>
-            </td>
-            <td>
-                <div class="rem">										
-                    <button type="button" onclick="location.href='/delete-income/{{income.id}}' ">
-                        <span class="glyphicon glyphicon-trash">X</span>
-                    </button>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>Sr.No.</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Note</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for income in incomes %}
+            <tr>
+                <td>{{forloop.counter}}</td>
+                <td>{{income.name}}</td>
+                <td>{{income.category.name}}</td>
+                <td class="amount-display">{{income.amount}}</td>
+                <td>{{income.date}}</td>
+                <td>{{income.note|default:"-"}}</td>
+                <td>
+                    <div class="action-container">										
+                        <button type="button" class="action-button" onclick="location.href='/edit-income/{{income.id}}' ">
+                            Edit
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-container">										
+                        <button type="button" class="action-button" onclick="location.href='/delete-income/{{income.id}}' ">
+                            X
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not incomes %}
+            <tr>
+                <td colspan="8" class="no-data-message">No income entries found. Add your first income by clicking the "Add Income" button.</td>
+            </tr>
+            {% endif %}
+        </tbody>
     </table>
 
     <br><br><br>
     {% comment %} For Report BTN {% endcomment %}
-    <div style="position: relative; text-align: center;">
-        <label style="font-size: 2em; color: white;" for="date">Generate Report: </label>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/income-report/daily' ">
-            <span class="glyphicon glyphicon-trash"> Daily </span>
-        </button>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/income-report/weekly' ">
-            <span class="glyphicon glyphicon-trash"> Weekly </span>
-        </button>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/income-report/monthly' ">
-            <span class="glyphicon glyphicon-trash"> Monthly </span>
-        </button>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/income-report/alltime' ">
-            <span class="glyphicon glyphicon-trash"> All </span>
-        </button>
+    <div class="report-buttons">
+        <label for="date">Generate Report:</label>
+        <button type="button" onclick="location.href='/income-report/daily'">Daily</button>
+        <button type="button" onclick="location.href='/income-report/weekly'">Weekly</button>
+        <button type="button" onclick="location.href='/income-report/monthly'">Monthly</button>
+        <button type="button" onclick="location.href='/income-report/alltime'">All</button>
     </div>
 
     <script>
+        // Form display functions with transitions
         function showIncomeForm() {
             var incomeForm = document.getElementById("incomeForm");
+            var overlay = document.getElementById('overlay');
+            
             incomeForm.style.display = "block";
+            overlay.style.display = 'block';
+            
+            // Allow DOM to update before adding visible class
+            setTimeout(() => {
+                incomeForm.classList.add('visible');
+                overlay.classList.add('visible');
+            }, 10);
         }
 
         function closeIncomeForm() {
             var incomeForm = document.getElementById("incomeForm");
-            incomeForm.style.display = "none";
+            var overlay = document.getElementById('overlay');
+            
+            incomeForm.classList.remove('visible');
+            overlay.classList.remove('visible');
+            
+            // Wait for transition to complete before hiding
+            setTimeout(() => {
+                incomeForm.style.display = "none";
+                overlay.style.display = 'none';
+            }, 300);
         }
-
-        function addIncomeEntry() {
-            var name = document.getElementById("name").value;
-            var category = document.getElementById("category").value;
-            var amount = document.getElementById("amount").value;
-            var date = document.getElementById("date").value;
-            var note = document.getElementById("note").value;
-
-            var incomeTable = document.getElementById("incomeTable");
-
-            var newRow = incomeTable.insertRow(-1);
-            var cell1 = newRow.insertCell(0);
-            var cell2 = newRow.insertCell(1);
-            var cell3 = newRow.insertCell(2);
-            var cell4 = newRow.insertCell(3);
-            var cell5 = newRow.insertCell(4);
-
-            cell1.innerHTML = name;
-            cell2.innerHTML = category;
-            cell3.innerHTML = amount;
-            cell4.innerHTML = date;
-            cell5.innerHTML = note;
-
-            // Clear the form
-            document.getElementById("incomeDetailsForm").reset();
-
-            // Close the form after submission
-            closeIncomeForm();
+        
+        // Form validation function
+        function validateIncomeForm() {
+            console.log('Form validation started');
+            var nameInput = document.getElementById("name");
+            var categorySelect = document.getElementById("category");
+            var amountInput = document.getElementById("amount");
+            var dateInput = document.getElementById("date");
+            var noteInput = document.getElementById("note");
+            
+            console.log('Validating form with values:');
+            console.log('- Name:', nameInput.value);
+            console.log('- Category ID:', categorySelect.value);
+            console.log('- Category Text:', categorySelect.options[categorySelect.selectedIndex] ? 
+                       categorySelect.options[categorySelect.selectedIndex].text : 'None selected');
+            console.log('- Amount:', amountInput.value);
+            console.log('- Date:', dateInput.value);
+            console.log('- Note:', noteInput ? noteInput.value : 'N/A');
+            
+            // Validate name
+            if (nameInput.value.trim() === "") {
+                alert("Please enter a name for the income");
+                console.log('Validation failed: Empty name');
+                nameInput.focus();
+                return false;
+            }
+            
+            // Validate category selection
+            if (!categorySelect.value || categorySelect.value === "" || 
+                categorySelect.value === "Select category" || categorySelect.selectedIndex === 0) {
+                alert("Please select a valid category");
+                console.log('Validation failed: Invalid category selection', categorySelect.value);
+                categorySelect.focus();
+                return false;
+            }
+            
+            // Validate amount is positive
+            if (!amountInput.value || amountInput.value === "" || parseFloat(amountInput.value) <= 0) {
+                alert("Amount must be greater than zero");
+                console.log('Validation failed: Invalid amount', amountInput.value);
+                amountInput.focus();
+                return false;
+            }
+            
+            // Validate date
+            if (!dateInput.value || dateInput.value === "") {
+                alert("Please select a date");
+                console.log('Validation failed: No date selected');
+                dateInput.focus();
+                return false;
+            }
+            
+            // Store timestamp for detecting successful form submission
+            sessionStorage.setItem('incomeFormSubmitted', Date.now());
+            
+            // Add confirmation message to the UI
+            var messagesContainer = document.getElementById('top-messages-container');
+            var confirmationMessage = document.createElement('div');
+            confirmationMessage.className = 'messages-container';
+            confirmationMessage.innerHTML = '<div class="message info">Submitting income...<span class="message-close" onclick="this.parentElement.style.display=\'none\';">&times;</span></div>';
+            messagesContainer.appendChild(confirmationMessage);
+            
+            console.log('Form validation passed, submitting now...');
+            return true;
         }
+        // No duplicate closeIncomeForm needed since it's defined above
+
+        // Remove addIncomeEntry function since we're using the form submission
+        
+        // Initialize all event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, initializing event listeners');
+            
+            // Initialize form with current date
+            var dateInput = document.getElementById('date');
+            if (!dateInput.value) {
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+                var yyyy = today.getFullYear();
+                dateInput.value = yyyy + '-' + mm + '-' + dd;
+                console.log('Date initialized to today:', dateInput.value);
+            }
+            
+            // Check if page was reloaded after form submission
+            var submittedTimestamp = sessionStorage.getItem('incomeFormSubmitted');
+            if (submittedTimestamp) {
+                // Clear the timestamp
+                sessionStorage.removeItem('incomeFormSubmitted');
+                
+                // Check if this is a page reload after submission (within last 5 seconds)
+                var now = Date.now();
+                var elapsed = now - submittedTimestamp;
+                
+                if (elapsed < 5000) {
+                    console.log('Page reloaded after successful form submission');
+                    
+                    // If no message is displayed, add a success message
+                    if (document.querySelectorAll('#top-messages-container .message').length === 0) {
+                        var messagesContainer = document.getElementById('top-messages-container');
+                        var successMessage = document.createElement('div');
+                        successMessage.className = 'messages-container';
+                        successMessage.innerHTML = '<div class="message success">Income added successfully!<span class="message-close" onclick="this.parentElement.style.display=\'none\';">&times;</span></div>';
+                        messagesContainer.appendChild(successMessage);
+                        
+                        // Scroll to top to show the message
+                        window.scrollTo(0, 0);
+                    }
+                    
+                    // Refresh the income table 
+                    setTimeout(function() {
+                        // Fetch updated incomes
+                        console.log('Automatically refreshing page to show new income');
+                        location.reload();
+                    }, 5000);
+                }
+            }
+        });
     </script>
 </body>
 </html>

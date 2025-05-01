@@ -1,8 +1,22 @@
+/* Common Variables */
+:root {
+    --primary-bg: linear-gradient(to bottom right, #FFD1DC, #E6E6FA);
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --button-primary: rgba(230, 230, 250, 0.7);
+    --button-hover: rgba(255, 209, 220, 0.9);
+    --text-color: #333333;
+    --border-color: #FFB6C1;
+    --shadow-color: rgba(255, 153, 187, 0.8);
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background: url(dark-gradient.jpg);
+    background: var(--primary-bg);
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--text-color);
 }
 
 .nav
@@ -22,7 +36,7 @@ body {
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    color: #ffffff;
+    color: var(--text-color);
     margin-right: 0px;
     margin-left: 490px;
     
@@ -31,52 +45,52 @@ body {
 #logo
 {
     text-decoration: none;
-    color: #ffffff;
+    color: var(--text-color);
+    font-weight: bold;
 }
 
-/* #Profile */
-.left
-{
+.left {
     width: 130px;
     height: 40px;
     font-weight: 700;
-    background: rgba(226, 209, 249, 0.7);
+    background: var(--button-primary);
     border: none;
     border-radius: 30px;
     cursor: pointer;
-    transition: .3s ease;
+    transition: all 0.3s ease;
     margin: 0 25px;
-    box-shadow: 0 0 5px rgba(168, 216, 234, 0.8);
-    
+    box-shadow: 0 0 5px var(--shadow-color);
+    color: var(--text-color);
 }
 
-/* #Profile:hover
-{
-    width: 150px;
-    height: 50px;
-    /* margin: 0 25px; */
-/* }  */
-
-
-.page-title
-{
-        color: #ffffff;
-        margin-right: 150px;
+.left:hover {
+    background: var(--button-hover);
+    transform: scale(1.05);
 }
 
-.nav-button .btn{
+.page-title {
+    color: var(--text-color);
+    margin-right: 150px;
+    font-weight: bold;
+}
+
+.nav-button .btn {
     width: 130px;
     height: 40px;
     font-weight: 700;
-    background: rgba(181, 234, 215, 0.7);
+    background: var(--button-primary);
     border: none;
     border-radius: 30px;
     cursor: pointer;
-    transition: .3s ease;
+    transition: all 0.3s ease;
     margin: 0 25px;
-    box-shadow: 0 0 5px rgba(168, 216, 234, 0.8);
-    
-    
+    box-shadow: 0 0 5px var(--shadow-color);
+    color: var(--text-color);
+}
+
+.nav-button .btn:hover {
+    background: var(--button-hover);
+    transform: scale(1.05);
 }
 
 #Logout
@@ -94,9 +108,16 @@ svg
     font-size: xx-large;
 }
 
-/* .btn:hover
-{
-    width: 150px;
-    height: 50px;
-    margin: 0 10px;
-} */
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 30px;
+    margin-top: 0;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}

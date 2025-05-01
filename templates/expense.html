@@ -6,13 +6,7 @@
     <link rel="stylesheet" href="{% static './expense.css' %}">
     <link rel="stylesheet" href="{% static 'nav.css' %}">
     <style>
-        /* Style for the close button */
-        .close-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-        }
+        /* Custom styles are now in expense.css */
     </style>
 </head>
 <body>
@@ -24,7 +18,7 @@
              <button class="btn" id="Income" onclick="location.href='/incomes'">Incomes</button>
              <button class="btn" id="Expense" onclick="location.href='/expenses'">Expenses</button>
              <!-- <button class="btn" id="Transaction" onclick="transaction()">Transaction</button> -->
-             <button class="btn" id="Setting" onclick="location.href='/settings'">Settigs</button>
+             <button class="btn" id="Setting" onclick="location.href='/settings'">Settings</button>
          </div>
  
          <div class="nav-logo">
@@ -38,25 +32,39 @@
          </div> -->
      </nav>
 
+     <!-- Prominent Message Display at the top -->
+     <div id="top-messages-container">
+         {% if messages %}
+         <div class="messages-container">
+             {% for message in messages %}
+             <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                 {{ message }}
+                 <span class="message-close" onclick="this.parentElement.style.display='none';">&times;</span>
+             </div>
+             {% endfor %}
+         </div>
+         {% endif %}
+     </div>
+     
      <br>
+    
+     <div id="overlay" class="overlay" onclick="closeExpenseForm()"></div>
 
-    <!-- Add Income Button -->
-    <button id="addIncomeButton" onclick="showIncomeForm()">Add Expense</button>
-
-    <!-- Income Entry Form (Initially Hidden) -->
-    <div id="incomeForm" style="display: none; position: relative;">
+    <!-- Expense Entry Form (Initially Hidden) -->
+    <div id="expenseForm">
         <!-- Close Button -->
-        <span class="close-button" onclick="closeIncomeForm()">&#10006;</span>
+        <span class="close-button" onclick="closeExpenseForm()">&#10006;</span>
 
         <h2>Add Expense Details</h2>
-        <form id="incomeDetailsForm" action="/expenses" method="post">
+        <form id="expenseDetailsForm" action="/expenses/" method="post" onsubmit="return submitExpenseForm()">
             {% csrf_token %}
+            <!-- CSRF token included above - required for Django form submission -->
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required><br>
 
             <label for="category">Category:</label>
-            <select class="custom-select tm-select-accounts" id="category" name="category">
-                      <option selected>Select category</option>
+            <select class="custom-select tm-select-accounts" id="category" name="category" required>
+                      <option value="">Select category</option>
                       {% for category in categories %}
                       <option value="{{category.id}}">{{category.name}}</option>
                       {% endfor %}
@@ -71,105 +79,399 @@
             <label for="note">Note:</label>
             <textarea id="note" name="note" rows="4"></textarea><br>
 
-            <input type="submit" value="Add" >
+            <div class="form-buttons">
+                <input type="submit" value="Add" class="action-button" onclick="console.log('Form submit clicked')">
+            </div>
         </form>
     </div>
 
-    <!-- Display Income Entries in a Table -->
-    <h2 style="color: white;">Expense Entries</h2>
-    <table id="incomeTable" border="1">
-        <tr>
-            <th>Sr.No.</th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>Note</th>
-            <th>Edit</th>
-            <th>Delete</th>
-        </tr>
+    </div>
+
+    <!-- Display Expense Entries in a Table -->
+
+    <h2>Expense Entries</h2>
+    <div class="button-container">
+        <button id="addExpenseButton" onclick="showExpenseForm()">Add Expense</button>
+    </div>
+    <table id="expenseTable" border="1">
+        <thead>
+            <tr>
+                <th>Sr.No.</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Note</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
         {% for expense in expenses %}
         <tr>
             <td>{{forloop.counter}}</td>
             <td>{{expense.name}}</td>
             <td>{{expense.category}}</td>
-            <td>{{expense.amount}}</td>
+            <td class="amount-display">{{expense.amount}}</td>
             <td>{{expense.date}}</td>
             <td>{{expense.note}}</td>
             <td>
-                <div class="rem">										
-                    <button type="button" onclick="location.href='/edit-expense/{{expense.id}}' ">
-                        <span class="glyphicon glyphicon-trash">Edit</span>
+                <div class="action-container">										
+                    <button type="button" class="action-button" onclick="location.href='/edit-expense/{{expense.id}}' ">
+                        Edit
                     </button>
                 </div>
             </td>
             <td>
-                <div class="rem">										
-                    <button type="button" onclick="location.href='/delete-expense/{{expense.id}}' ">
-                        <span class="glyphicon glyphicon-trash">X</span>
+                <div class="action-container">										
+                    <button type="button" class="action-button" onclick="location.href='/delete-expense/{{expense.id}}' ">
+                        X
                     </button>
                 </div>
             </td>
         </tr>
         {% endfor %}
+        {% if not incomes %}
+        <tr>
+            <td colspan="8" class="no-data-message">No expense entries found. Add your first expense by clicking the "Add Expense" button.</td>
+        </tr>
+        {% endif %}
+        </tbody>
     </table>
     <br><br><br>
     {% comment %} For Report BTN {% endcomment %}
-    <div style="position: relative; text-align: center;">
-        <label style="font-size: 2em; color: white;" for="date">Generate Report: </label>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/expense-report/daily' ">
-            <span class="glyphicon glyphicon-trash"> Daily </span>
-        </button>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/expense-report/weekly' ">
-            <span class="glyphicon glyphicon-trash"> Weekly </span>
-        </button>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/expense-report/monthly' ">
-            <span class="glyphicon glyphicon-trash"> Monthly </span>
-        </button>
-        <button style="font-size: 2em;align-self: center;" type="button" onclick="location.href='/expense-report/alltime' ">
-            <span class="glyphicon glyphicon-trash"> All </span>
-        </button>
+    <div class="report-buttons">
+        <label for="date">Generate Report:</label>
+        <button type="button" onclick="location.href='/expense-report/daily'">Daily</button>
+        <button type="button" onclick="location.href='/expense-report/weekly'">Weekly</button>
+        <button type="button" onclick="location.href='/expense-report/monthly'">Monthly</button>
+        <button type="button" onclick="location.href='/expense-report/alltime'">All</button>
     </div>
 
     <script>
-        function showIncomeForm() {
-            var incomeForm = document.getElementById("incomeForm");
-            incomeForm.style.display = "block";
+        // Form display functions
+        function showExpenseForm() {
+            var expenseForm = document.getElementById("expenseForm");
+            var overlay = document.getElementById('overlay');
+            
+            expenseForm.style.display = "block";
+            overlay.style.display = 'block';
+            
+            // Allow DOM to update before adding visible class
+            setTimeout(() => {
+                expenseForm.classList.add('visible');
+                overlay.classList.add('visible');
+            }, 10);
         }
 
-        function closeIncomeForm() {
-            var incomeForm = document.getElementById("incomeForm");
-            incomeForm.style.display = "none";
+        function closeExpenseForm() {
+            var expenseForm = document.getElementById("expenseForm");
+            var overlay = document.getElementById('overlay');
+            
+            expenseForm.classList.remove('visible');
+            overlay.classList.remove('visible');
+            
+            // Wait for transition to complete before hiding
+            setTimeout(() => {
+                expenseForm.style.display = "none";
+                overlay.style.display = 'none';
+            }, 300);
         }
-
-        function addIncomeEntry() {
-            var name = document.getElementById("name").value;
-            var category = document.getElementById("category").value;
-            var amount = document.getElementById("amount").value;
-            var date = document.getElementById("date").value;
-            var note = document.getElementById("note").value;
-
-            var incomeTable = document.getElementById("incomeTable");
-
-            var newRow = incomeTable.insertRow(-1);
-            var cell1 = newRow.insertCell(0);
-            var cell2 = newRow.insertCell(1);
-            var cell3 = newRow.insertCell(2);
-            var cell4 = newRow.insertCell(3);
-            var cell5 = newRow.insertCell(4);
-
-            cell1.innerHTML = name;
-            cell2.innerHTML = category;
-            cell3.innerHTML = amount;
-            cell4.innerHTML = date;
-            cell5.innerHTML = note;
-
-            // Clear the form
-            document.getElementById("incomeDetailsForm").reset();
-
-            // Close the form after submission
-            closeIncomeForm();
+        
+        // Form validation function
+        function validateExpenseForm() {
+            console.log('Form validation started');
+            var nameInput = document.getElementById("name");
+            var categorySelect = document.getElementById("category");
+            var amountInput = document.getElementById("amount");
+            var dateInput = document.getElementById("date");
+            var noteInput = document.getElementById("note");
+            
+            console.log('Validating form with values:');
+            console.log('- Name:', nameInput.value);
+            console.log('- Category ID:', categorySelect.value);
+            console.log('- Category Text:', categorySelect.options[categorySelect.selectedIndex] ? 
+                       categorySelect.options[categorySelect.selectedIndex].text : 'None selected');
+            console.log('- Amount:', amountInput.value);
+            console.log('- Date:', dateInput.value);
+            console.log('- Note:', noteInput.value);
+            
+            // Validate name
+            if (nameInput.value.trim() === "") {
+                alert("Please enter a name for the expense");
+                console.log('Validation failed: Empty name');
+                nameInput.focus();
+                return false;
+            }
+            
+            // Validate category selection
+            if (!categorySelect.value || categorySelect.value === "" || 
+                categorySelect.value === "Select category" || categorySelect.selectedIndex === 0) {
+                alert("Please select a valid category");
+                console.log('Validation failed: Invalid category selection', categorySelect.value);
+                categorySelect.focus();
+                return false;
+            }
+            
+            // Double check category value is a number (ID)
+            if (isNaN(parseInt(categorySelect.value))) {
+                alert("Please select a valid category (numeric ID required)");
+                console.log('Validation failed: Category value is not a numeric ID', categorySelect.value);
+                categorySelect.focus();
+                return false;
+            }
+            
+            // Validate amount is positive
+            if (!amountInput.value || amountInput.value === "" || parseFloat(amountInput.value) <= 0) {
+                alert("Amount must be greater than zero");
+                console.log('Validation failed: Invalid amount', amountInput.value);
+                amountInput.focus();
+                return false;
+            }
+            
+            // Validate date
+            if (!dateInput.value || dateInput.value === "") {
+                alert("Please select a date");
+                console.log('Validation failed: No date selected');
+                dateInput.focus();
+                return false;
+            }
+            
+            // Validate date format (YYYY-MM-DD)
+            if (!dateInput.value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                alert("Please enter a valid date in YYYY-MM-DD format");
+                console.log('Validation failed: Invalid date format', dateInput.value);
+                dateInput.focus();
+                return false;
+            }
+            
+            console.log('All validation checks passed!');
+            return true;
         }
-    </script>
+        
+        // Form submission handler
+        function submitExpenseForm() {
+            console.log('Form submission handler called');
+            
+            // Validate the form first
+            if (!validateExpenseForm()) {
+                console.log('Form validation failed');
+                return false;
+            }
+            
+            // Store timestamp for detecting successful form submission
+            sessionStorage.setItem('expenseFormSubmitted', Date.now());
+            
+            // Form is valid, proceed with submission checks
+            var form = document.getElementById('expenseDetailsForm');
+            
+            // Check if form action and method are correct
+            if (form.action !== window.location.origin + '/expenses/') {
+                console.error('Form action is incorrect:', form.action);
+                alert('Form submission URL is incorrect. Please refresh the page and try again.');
+                return false;
+            }
+            
+            if (form.method.toLowerCase() !== 'post') {
+                console.error('Form method is incorrect:', form.method);
+                alert('Form submission method is incorrect. Please refresh the page and try again.');
+                return false;
+            }
+            
+            // Check if CSRF token is present and valid
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken || !csrfToken.value) {
+                console.error('CSRF token is missing');
+                alert('Security token is missing. Please refresh the page and try again.');
+                return false;
+            }
+            
+            console.log('CSRF token exists:', csrfToken.value.substring(0, 5) + '...');
+            
+            // Verify form has proper CSRF token handling
+            var formHtml = form.innerHTML;
+            if (!formHtml.includes('csrfmiddlewaretoken')) {
+                console.error('CSRF token field not found in form HTML');
+                alert('Security token not properly embedded in form. Please refresh the page.');
+                return false;
+            }
+            
+            // Log form data for debugging
+            var formData = new FormData(form);
+            var formDataObj = {};
+            console.log('Form data contents:');
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+                formDataObj[pair[0]] = pair[1];
+            }
+            console.log('Form data as object:', formDataObj);
+            
+            // Add confirmation message to the UI
+            var messagesContainer = document.getElementById('top-messages-container');
+            var confirmationMessage = document.createElement('div');
+            confirmationMessage.className = 'messages-container';
+            confirmationMessage.innerHTML = '<div class="message info">Submitting expense...<span class="message-close" onclick="this.parentElement.style.display=\'none\';">&times;</span></div>';
+            messagesContainer.appendChild(confirmationMessage);
+            
+            // Log the submission for debugging
+            console.log('Form validation passed, submitting now...');
+            
+            // Set a flag to indicate the form is being submitted
+            sessionStorage.setItem('expenseFormSubmitting', 'true');
+            
+            // Important: Return true to allow the form to submit normally
+            return true;
+        }
+        
+        // Initialize all event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, initializing event listeners');
+            
+            // Add input event to amount field to validate positive values
+            var amountInput = document.getElementById('amount');
+            amountInput.addEventListener('input', function() {
+                console.log('Amount entered:', this.value);
+                if (this.value && parseFloat(this.value) <= 0) {
+                    this.setCustomValidity('Amount must be greater than zero');
+                    console.log('Invalid amount:', this.value);
+                } else {
+                    this.setCustomValidity('');
+                    console.log('Valid amount:', this.value);
+                }
+            });
+            
+            // Add input event to date field to validate format
+            var dateInput = document.getElementById('date');
+            dateInput.addEventListener('input', function() {
+                console.log('Date entered:', this.value);
+                if (this.value && !this.value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    this.setCustomValidity('Please use YYYY-MM-DD format');
+                    console.log('Invalid date format:', this.value);
+                } else {
+                    this.setCustomValidity('');
+                    console.log('Valid date format:', this.value);
+                }
+            });
+            
+            // Add change event to category dropdown to validate selection
+            var categorySelect = document.getElementById('category');
+            categorySelect.addEventListener('change', function() {
+                console.log('Category selected:', this.value);
+                console.log('Category text:', this.options[this.selectedIndex].text);
+                
+                if (!this.value || this.value === "") {
+                    this.setCustomValidity('Please select a valid category');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+            
+            // Add form submission event listener for validation and data handling
+            var form = document.getElementById('expenseDetailsForm');
+            
+            // Ensure the form has the correct action
+            if (form.action !== window.location.origin + '/expenses/') {
+                form.action = window.location.origin + '/expenses/';
+                console.log('Fixed form action:', form.action);
+            }
+            
+            // Verify CSRF token is present in the form
+            var csrfToken = form.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) {
+                console.error('CSRF token input not found in form!');
+                // Add it dynamically if missing
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                
+                // Get CSRF token from cookie or meta tag
+                var csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+                if (csrfCookie) {
+                    csrfInput.value = csrfCookie.split('=')[1];
+                    form.prepend(csrfInput);
+                    console.log('Added CSRF token to form from cookie');
+                } else {
+                    console.error('Could not find CSRF token in cookies either!');
+                }
+            } else {
+                console.log('CSRF token is present in form');
+            }
+            
+            form.addEventListener('reset', function() {
+                console.log('Form reset');
+                // Clear any existing validation messages
+                var inputs = form.querySelectorAll('input, select, textarea');
+                inputs.forEach(function(input) {
+                    input.setCustomValidity('');
+                });
+            });
+            
+            // Add event listener to form buttons to handle click events
+            var formButtons = document.querySelectorAll('.form-buttons button, .form-buttons input[type="submit"]');
+            formButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    console.log('Button clicked:', this.value || this.textContent);
+                });
+            });
+            
+            // Initialize form with current date
+            var dateInput = document.getElementById('date');
+            // Initialize form with current date in YYYY-MM-DD format
+            var dateInput = document.getElementById('date');
+            if (!dateInput.value) {
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+                var yyyy = today.getFullYear();
+                var formattedDate = yyyy + '-' + mm + '-' + dd;
+                dateInput.value = formattedDate;
+                console.log('Date initialized to today:', formattedDate);
+                
+                // Verify date format is correct
+                if (!formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    console.error('Date initialization failed: Invalid format', formattedDate);
+                    // Fallback to empty to trigger browser's date picker
+                    dateInput.value = '';
+                }
+            }
+            
+            // Check if page was reloaded after form submission
+            var submittedTimestamp = sessionStorage.getItem('expenseFormSubmitted');
+            if (submittedTimestamp) {
+                // Clear the timestamp
+                sessionStorage.removeItem('expenseFormSubmitted');
+                
+                // Check if this is a page reload after submission (within last 5 seconds)
+                var now = Date.now();
+                var elapsed = now - submittedTimestamp;
+                
+                if (elapsed < 5000) {
+                    console.log('Page reloaded after successful form submission');
+                    
+                    // Clear the submitting flag
+                    sessionStorage.removeItem('expenseFormSubmitting');
+                    
+                    // If no message is displayed, add a success message
+                    if (document.querySelectorAll('#top-messages-container .message').length === 0) {
+                        var messagesContainer = document.getElementById('top-messages-container');
+                        var successMessage = document.createElement('div');
+                        successMessage.className = 'messages-container';
+                        successMessage.innerHTML = '<div class="message success">Expense added successfully!<span class="message-close" onclick="this.parentElement.style.display=\'none\';">&times;</span></div>';
+                        messagesContainer.appendChild(successMessage);
+                        
+                        // Scroll to top to show the message
+                        window.scrollTo(0, 0);
+                    }
+                    
+                    // Refresh the expense table 
+                    setTimeout(function() {
+                        // Fetch updated expenses
+                        console.log('Automatically refreshing page to show new expense');
+                        location.reload();
+                    }, 5000);
+                }
+            }
+        });
+        </script>
 </body>
 </html>

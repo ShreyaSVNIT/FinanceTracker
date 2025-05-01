@@ -1,104 +1,425 @@
-body{
-    /* display: flex;
-    justify-content: center;
-    align-items: center; */
-    min-height: 100vh;
-    background: url(dark-gradient.jpg);
-}
-/* styles.css */
-
-/* styles.css */
-
-/* Add Income Button */
-#addIncomeButton {
-    position: absolute;
-    right: 45px;
-    background-color: rgba(255, 255, 255, 0.5);
-    padding: 15px 62px;
-    border: none;
-    border-radius: 5px;
-}
-h1{
-    color: white;
-}
-/* Centered Income Entries Heading with White Color */
-h2 {
+/* No data message styling */
+.no-data-message {
     text-align: center;
-    color:black;
-}
-
-/* Styling for the Income Table */
-#incomeTable {
-    border-collapse: collapse;
-    width: 100%;
-    background-color: rgba(250, 235, 215, 0.379); /* Color theme for the table */
-    border-radius: 7px; 
-    border-color: none;
-}
-
-#incomeTable th, #incomeTable td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid rgba(250, 235, 215, 0.379);
-}
-
-#incomeTable th {
-    background-color: rgba(250, 235, 215, 0.379);
-   
-}
-
-/* Style for even rows */
-#incomeTable tr:nth-child(even) {
-    background-color: rgba(255, 255, 255, 0.5);
-}
-/* Styling for the Form */
-#incomeForm {
-    position: fixed;
-    float: initial;
-    z-index: 10;
-    border: 1px solid #ccc;
     padding: 20px;
-    margin-top: 20px;
-width: 85%;
-margin-inline: 7.5%;
-    background-color: rgba(255, 255, 255, 0.998); /* Transparent white background for the form */
-    border-radius: 5px;
-    color: black;
+    color: #777;
+    font-style: italic;
 }
 
-#incomeDetailsForm {
+/* Amount display */
+.amount-display {
+    text-align: right;
+    font-weight: 500;
+}
+
+
+/* Messages styling */
+#top-messages-container {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+#messages-area {
+    width: 100%;
+    padding: 10px 0;
+}
+
+.messages-container {
+    width: 90%;
+    margin: 5px auto 20px auto;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.message {
+    position: relative;
+    padding: 15px 35px 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.message-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0.7;
+}
+
+.message-close:hover {
+    opacity: 1;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.success {
+    background-color: rgba(152, 255, 152, 0.9);
+    color: #155724;
+    border-left: 5px solid #155724;
+}
+
+.message.error {
+    background-color: rgba(255, 182, 193, 0.9);
+    color: #721c24;
+    border-left: 5px solid #721c24;
+}
+
+.message.info {
+    background-color: rgba(186, 228, 255, 0.9);
+    color: #0c5460;
+    border-left: 5px solid #0c5460;
+}
+
+.message.warning {
+    background-color: rgba(255, 243, 205, 0.9);
+    color: #856404;
+    border-left: 5px solid #856404;
+}
+
+/* Common Variables */
+:root {
+    --primary-bg: linear-gradient(to bottom right, #FFD1DC, #E6E6FA);
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --button-primary: rgba(230, 230, 250, 0.7);
+    --button-hover: rgba(255, 209, 220, 0.9);
+    --text-color: #333333;
+    --border-color: #FFB6C1;
+    --shadow-color: rgba(255, 153, 187, 0.8);
+    --success-color: #98FF98;
+    --danger-color: #FFB6C1;
+}
+
+body {
+    font-family: 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: var(--primary-bg);
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--text-color);
+}
+
+/* Headings */
+h1, h2 {
+    color: var(--text-color);
+    text-align: center;
+    margin: 20px 0 10px 0;
+}
+
+/* Add Expense Button */
+#addExpenseButton {
+    padding: 12px 25px;
+    background: rgba(255, 182, 193, 0.7);
+    border: none;
+    border-radius: 30px;
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(255, 182, 193, 0.5);
+    margin-bottom: 15px;
+}
+
+#addExpenseButton:hover {
+    background: rgba(255, 182, 193, 0.9);
+    transform: scale(1.05);
+}
+
+/* Expense Table */
+#expenseTable {
+    width: 90%;
+    margin: 0 auto 20px;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 15px var(--shadow-color);
+}
+
+#expenseTable th {
+    background: rgba(255, 182, 193, 0.2); /* Slight red tint for headers */
+    padding: 15px;
+    text-align: left;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+#expenseTable td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#expenseTable tr:last-child td {
+    border-bottom: none;
+}
+
+#expenseTable tr:nth-child(even) {
+    background: rgba(255, 182, 193, 0.1); /* Very light red for alternate rows */
+}
+
+#expenseTable tr:hover {
+    background: rgba(255, 182, 193, 0.2);
+}
+
+/* Button Positioning for Mobile View */
+/* Button Container for centered alignment */
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin: 15px auto 25px auto;
+    width: 90%;
+    padding: 5px 0;
+}
+
+@media (max-width: 768px) {
+    #addExpenseButton {
+        padding: 10px 18px;
+        font-size: 14px;
+    }
+}
+
+/* Expense Form */
+#expenseForm {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 0 20px var(--shadow-color);
+    z-index: 1001;
+    display: none; /* hidden by default */
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+#expenseForm.visible {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+/* Background overlay for form */
+.overlay, #overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.visible, #overlay.visible {
+    display: block;
+    opacity: 1;
+}
+
+/* Close button for form */
+.close-button {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: transform 0.3s ease;
+}
+
+.close-button:hover {
+    transform: scale(1.1);
+}
+
+#expenseDetailsForm {
     display: flex;
     flex-direction: column;
+    gap: 15px;
 }
 
-#incomeDetailsForm label {
-    font-weight: bold;
+#expenseDetailsForm label {
+    color: var(--text-color);
+    font-weight: 500;
     margin-bottom: 5px;
-    
-}
-#incomeDetailsForm input[type="text"],
-#incomeDetailsForm input[type="number"],
-#incomeDetailsForm input[type="date"],
-#incomeDetailsForm textarea {
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
 }
 
-#incomeDetailsForm input[type="button"] {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 20px;
-    cursor: pointer;
+#expenseDetailsForm input[type="text"],
+#expenseDetailsForm input[type="number"],
+#expenseDetailsForm input[type="date"],
+#expenseDetailsForm textarea,
+#expenseDetailsForm select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-color);
+    transition: all 0.3s ease;
 }
 
-#incomeDetailsForm input[type="button"]:hover {
-    background-color: #45a049;
-}
-
-#incomeDetailsForm input[type="button"]:focus {
+#expenseDetailsForm input:focus,
+#expenseDetailsForm textarea:focus,
+#expenseDetailsForm select:focus {
     outline: none;
+    box-shadow: 0 0 5px rgba(255, 182, 193, 0.5);
+}
+
+#expenseDetailsForm input[type="submit"],
+#expenseDetailsForm input[type="button"] {
+    padding: 12px 25px;
+    background: rgba(255, 182, 193, 0.7);
+    border: none;
+    border-radius: 30px;
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(255, 182, 193, 0.5);
+}
+
+#expenseDetailsForm input[type="submit"]:hover,
+#expenseDetailsForm input[type="button"]:hover {
+    background: rgba(255, 182, 193, 0.9);
+    transform: scale(1.05);
+}
+
+/* Form button container */
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.form-buttons input {
+    flex: 1;
+}
+
+/* Action Buttons */
+.action-button {
+    padding: 8px 16px;
+    background: rgba(255, 182, 193, 0.7);
+    border: none;
+    border-radius: 20px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(255, 182, 193, 0.5);
+    font-size: 14px;
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+}
+
+.action-button:hover {
+    background: rgba(255, 182, 193, 0.9);
+    transform: scale(1.05);
+}
+
+/* Action container for better button layout */
+.action-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 5px;
+}
+
+/* Amount Display */
+.amount-display {
+    color: #dc3545; /* Red color for expense amounts */
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #expenseForm {
+        width: 90%;
+        padding: 20px;
+    }
+    
+    #expenseTable {
+        width: 95%;
+        overflow-x: auto;
+        display: block;
+    }
+}
+
+/* Report Buttons Section */
+.report-buttons {
+    margin: 30px auto;
+    text-align: center;
+}
+
+.report-buttons label {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-right: 10px;
+}
+
+/* Styling for the Report Buttons */
+.report-buttons button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 20px;
+    background: var(--button-primary);
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px var(--shadow-color);
+}
+
+.report-buttons button:hover {
+    background: var(--button-hover);
+    transform: scale(1.05);
+}
+
+#expenseDetailsForm input,
+#expenseDetailsForm textarea,
+#expenseDetailsForm select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-color);
+    height: 48px; /* uniform height */
+    transition: all 0.3s ease;
+}
+
+/* Calendar icon padding */
+#expenseDetailsForm input[type="date"] {
+    padding-right: 40px;
+}
+
+/* Dropdown style: keep default arrow but adjust right padding */
+#expenseDetailsForm select {
+    padding-right: 40px; /* Same right padding as date input */
+    background-position: right 16px center; /* Slightly shift arrow left */
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
 }

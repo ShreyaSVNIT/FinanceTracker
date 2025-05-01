@@ -33,101 +33,288 @@
 
     <main class="container">
         <div class="left-chart">
-            <div class="chart-container">
+            <div class="chart-container" style="height: 300px;">
                 <canvas id="chart1"></canvas>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" style="height: 300px;">
                 <canvas id="chart2"></canvas>
             </div>
         </div>
         <div class="right-chart">
-
-            
-            <div class="chart-container">
+            <div class="chart-container" style="height: 300px;">
                 <canvas id="chart3"></canvas>
             </div>
-
             <div class="fields">
                 <button class="income" onclick="location.href='/incomes'">Incomes</button>
                 <button class="expense" onclick="location.href='/expenses'">Expenses</button>
-
                 <p class="balance">Balance: {{balance}} ₹</p>
             </div>
-
         </div>
     </main>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    {% comment %} <script src="{% static 'dashboard.js' %}"></script> {% endcomment %}
-    <script >
+    <!-- Chart container styles -->
+    <style>
+        /* Chart container styles */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 300px;
+        }
 
-    // Dummy data for the second chart (line chart)
-    const labels2 = ["June", "July", "August", "September", "October"];
-    const data2 = [45, 70, 42, 60, 75];
+        .chart-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
 
+        /* Ensure canvas fills container */
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
 
-    // Create the first Chart.js chart (bar chart)
-    const ctx1 = document.getElementById("chart1").getContext("2d");
-    const chart1 = new Chart(ctx1, {
-        type: "bar",
-        data: {
-            labels: [{% for day in pre_10days_list %}"{{day}}",{% endfor %}],
-            datasets: [
-                {
-                    label: "Last 10 days Incomes",
-                    data: [{% for income in Income_last_10days_amount %}{{ income }},{% endfor %}],
-                    backgroundColor: "rgba(181, 234, 215, 0.6)",
-                    borderColor: "#B5EAD7",
-                    borderWidth: 1,
-                },
-            ],
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                },
-            },
-        },
-    });
+        /* Loading state */
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
 
-    // Create the second Chart.js chart (line chart)
-    const ctx2 = document.getElementById("chart2").getContext("2d");
-    const chart2 = new Chart(ctx2, {
-        type: "line",
-        data: {
-            labels: [{% for day in pre_10days_list %}"{{day}}",{% endfor %}],
-            datasets: [
-                {
-                    label: "Last 10 days Expenses",
-                    data: [{% for expense in Expense_last_10days_amount %}{{ expense }},{% endfor %}],
-                    borderColor: "#FFCAD4",
-                    borderWidth: 2,
-                    fill: false,
-                },
-            ],
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                },
-            },
-        },
-    });
+        .chart-container.loaded::before {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+    
+    <!-- Chart.js dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    // Create the third Chart.js chart (donut chart)
-    const ctx3 = document.getElementById("chart3").getContext("2d");
-    const chart3 = new Chart(ctx3, {
-        type: "doughnut",
-        data: {
-            labels: [{% for category in category_list %}"{{category}}",{% endfor %}],
-            datasets: [
-                {
-                    data: [{% for val in catg_total_list %}{{val}},{% endfor %}],
-                    backgroundColor: ["#FFCAD4", "#A8D8EA", "#FFE5B4", "#B5EAD7", "#E2D1F9", "#FFD4B8"],
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Debug data
+        console.log('Chart Data:', {
+            dates: [{% for day in pre_10days_list %}"{{day}}",{% endfor %}],
+            incomes: [{% for income in Income_last_10days_amount %}{{ income }},{% endfor %}],
+            expenses: [{% for expense in Expense_last_10days_amount %}{{ expense }},{% endfor %}],
+            categories: [{% for category in category_list %}"{{category}}",{% endfor %}],
+            categoryAmounts: [{% for val in catg_total_list %}{{val}},{% endfor %}]
+        });
+
+        // Set default styles
+        Chart.defaults.font.family = "'Poppins', sans-serif";
+        Chart.defaults.color = '#333333';
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+
+        // Common options for all charts
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 12,
+                            family: "'Poppins', sans-serif"
+                        }
+                    }
                 },
-            ],
-        },
+                title: {
+                    display: true,
+                    font: {
+                        size: 16,
+                        family: "'Poppins', sans-serif",
+                        weight: '500'
+                    },
+                    padding: {
+                        top: 10,
+                        bottom: 30
+                    }
+                }
+            }
+        };
+
+        try {
+            // Income Chart (Bar)
+            new Chart(document.getElementById("chart1").getContext("2d"), {
+                type: "bar",
+                data: {
+                    labels: [{% for day in pre_10days_list %}"{{day}}",{% endfor %}],
+                    datasets: [{
+                        label: "Income",
+                        data: [{% for income in Income_last_10days_amount %}{{ income }},{% endfor %}],
+                        backgroundColor: "rgba(181, 234, 215, 0.6)",
+                        borderColor: "#B5EAD7",
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    family: "'Poppins', sans-serif"
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Last 10 Days Income',
+                            font: {
+                                size: 16,
+                                family: "'Poppins', sans-serif",
+                                weight: '500'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 30
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Expense Chart (Line)
+            new Chart(document.getElementById("chart2").getContext("2d"), {
+                type: "line",
+                data: {
+                    labels: [{% for day in pre_10days_list %}"{{day}}",{% endfor %}],
+                    datasets: [{
+                        label: "Expense",
+                        data: [{% for expense in Expense_last_10days_amount %}{{ expense }},{% endfor %}],
+                        borderColor: "#FFCAD4",
+                        backgroundColor: "rgba(255, 202, 212, 0.2)",
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    family: "'Poppins', sans-serif"
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Last 10 Days Expenses',
+                            font: {
+                                size: 16,
+                                family: "'Poppins', sans-serif",
+                                weight: '500'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 30
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Category Distribution (Doughnut)
+            new Chart(document.getElementById("chart3").getContext("2d"), {
+                type: "doughnut",
+                data: {
+                    labels: [{% for category in category_list %}"{{category}}",{% endfor %}],
+                    datasets: [{
+                        data: [{% for val in catg_total_list %}{{val}},{% endfor %}],
+                        backgroundColor: ["#FFCAD4", "#A8D8EA", "#FFE5B4", "#B5EAD7", "#E2D1F9", "#FFD4B8"],
+                        borderWidth: 1,
+                        borderColor: "#fff"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    family: "'Poppins', sans-serif"
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Category Distribution',
+                            font: {
+                                size: 16,
+                                family: "'Poppins', sans-serif",
+                                weight: '500'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 30
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            // Mark charts as loaded
+            document.querySelectorAll('.chart-container').forEach(container => {
+                container.classList.add('loaded');
+            });
+
+            console.log('Charts initialized successfully');
+        } catch (error) {
+            console.error('Error creating charts:', error);
+        }
     });
     </script>
 </body>

@@ -1,105 +1,319 @@
-body{
-    /* display: flex;
-    justify-content: center;
-    align-items: center; */
-    min-height: 100vh;
-    background: url(dark-gradient.jpg);
+/* No data message styling */
+.no-data-message {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    font-style: italic;
 }
-/* styles.css */
 
-/* styles.css */
+/* Amount display */
+.amount-display {
+    text-align: right;
+    font-weight: 500;
+}
+
+/* Messages styling */
+#top-messages-container {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+/* Common Variables */
+:root {
+    --primary-bg: linear-gradient(to bottom right, #FFD1DC, #E6E6FA);
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --button-primary: rgba(230, 230, 250, 0.7);
+    --button-hover: rgba(255, 209, 220, 0.9);
+    --text-color: #333333;
+    --border-color: #FFB6C1;
+    --shadow-color: rgba(255, 153, 187, 0.8);
+    --success-color: #98FF98;
+    --danger-color: #FFB6C1;
+}
+
+body {
+    font-family: 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: var(--primary-bg);
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--text-color);
+}
+
+/* Headings */
+h1, h2 {
+    color: var(--text-color);
+    text-align: center;
+    margin: 20px 0 10px 0;
+}
 
 /* Add Income Button */
 #addIncomeButton {
-    position: absolute;
-    top: 16px;
-    right: 45px;
-    background-color: rgba(255, 255, 255, 0.5);
-    padding: 15px 62px;
+    padding: 12px 25px;
+    background: rgba(152, 255, 152, 0.7);
     border: none;
-    border-radius: 5px;
-}
-h1{
-    color: white;
-}
-/* Centered Income Entries Heading with White Color */
-h2 {
-    text-align: center;
-    color:black;
+    border-radius: 30px;
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(152, 255, 152, 0.5);
+    margin-bottom: 15px;
 }
 
-/* Styling for the Income Table */
+#addIncomeButton:hover {
+    background: rgba(152, 255, 152, 0.9);
+    transform: scale(1.05);
+}
+
+/* Income Table */
 #incomeTable {
+    width: 90%;
+    margin: 0 auto 20px;
     border-collapse: collapse;
-    width: 100%;
-    background-color: rgba(250, 235, 215, 0.379); /* Color theme for the table */
-    border-radius: 7px; 
-    border-color: none;
-}
-
-#incomeTable th, #incomeTable td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid rgba(250, 235, 215, 0.379);
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 15px var(--shadow-color);
 }
 
 #incomeTable th {
-    background-color: rgba(250, 235, 215, 0.379);
-   
+    background: rgba(152, 255, 152, 0.2); /* Slight green tint for headers */
+    padding: 15px;
+    text-align: left;
+    color: var(--text-color);
+    font-weight: 600;
 }
 
-/* Style for even rows */
+#incomeTable td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#incomeTable tr:last-child td {
+    border-bottom: none;
+}
+
 #incomeTable tr:nth-child(even) {
-    background-color: rgba(255, 255, 255, 0.5);
+    background: rgba(152, 255, 152, 0.1); /* Very light green for alternate rows */
 }
-/* Styling for the Form */
-#incomeForm {
-    position: fixed;
-    float: initial;
-    z-index: 10;
-    border: 1px solid #ccc;
-    padding: 20px;
-    margin-top: 20px;
-width: 85%;
-margin-inline: 7.5%;
-    background-color: rgba(255, 255, 255, 0.998); /* Transparent white background for the form */
-    border-radius: 5px;
-    color: black;
+
+#incomeTable tr:hover {
+    background: rgba(152, 255, 152, 0.2);
 }
+
+/* We remove this duplicate style since we already have #addIncomeButton defined above */
+
+
 
 #incomeDetailsForm {
     display: flex;
     flex-direction: column;
+    gap: 15px;
 }
 
 #incomeDetailsForm label {
-    font-weight: bold;
+    color: var(--text-color);
+    font-weight: 500;
     margin-bottom: 5px;
-    
 }
+
 #incomeDetailsForm input[type="text"],
 #incomeDetailsForm input[type="number"],
 #incomeDetailsForm input[type="date"],
-#incomeDetailsForm textarea {
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+#incomeDetailsForm textarea,
+#incomeDetailsForm select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-color);
+    transition: all 0.3s ease;
 }
 
-#incomeDetailsForm input[type="button"] {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 20px;
-    cursor: pointer;
-}
-
-#incomeDetailsForm input[type="button"]:hover {
-    background-color: #45a049;
-}
-
-#incomeDetailsForm input[type="button"]:focus {
+#incomeDetailsForm input:focus,
+#incomeDetailsForm textarea:focus,
+#incomeDetailsForm select:focus {
     outline: none;
+    box-shadow: 0 0 5px rgba(152, 255, 152, 0.5);
+}
+
+#incomeDetailsForm input[type="submit"],
+#incomeDetailsForm input[type="button"] {
+    padding: 12px 25px;
+    background: rgba(152, 255, 152, 0.7);
+    border: none;
+    border-radius: 30px;
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(152, 255, 152, 0.5);
+}
+
+#incomeDetailsForm input[type="submit"]:hover,
+#incomeDetailsForm input[type="button"]:hover {
+    background: rgba(152, 255, 152, 0.9);
+    transform: scale(1.05);
+}
+
+/* Action Buttons */
+.action-button {
+    padding: 8px 16px;
+    background: rgba(152, 255, 152, 0.7);
+    border: none;
+    border-radius: 20px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(152, 255, 152, 0.5);
+    font-size: 14px;
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+}
+
+.action-button:hover {
+    background: rgba(152, 255, 152, 0.9);
+    transform: scale(1.05);
+}
+
+/* Action container for better button layout */
+.action-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 5px;
+}
+
+/* Amount Display */
+.amount-display {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+/* Button Container for centered alignment */
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin: 15px auto 25px auto;
+    width: 90%;
+    padding: 5px 0;
+}
+
+@media (max-width: 768px) {
+    #incomeForm {
+        width: 90%;
+        padding: 20px;
+    }
+    
+    #incomeTable {
+        width: 95%;
+        overflow-x: auto;
+        display: block;
+    }
+    
+    #addIncomeButton {
+        padding: 10px 18px;
+        font-size: 14px;
+    }
+}
+#incomeForm, #expenseForm {
+    display: none;
+}
+
+/* Report Buttons Section */
+.report-buttons {
+    margin: 30px auto;
+    text-align: center;
+}
+
+.report-buttons label {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-right: 10px;
+}
+
+/* Styling for the Report Buttons */
+.report-buttons button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 20px;
+    background: var(--button-primary);
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px var(--shadow-color);
+}
+
+.report-buttons button:hover {
+    background: var(--button-hover);
+    transform: scale(1.05);
+}
+
+/* Background overlay behind popup */
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(51, 51, 51, 0.5); /* dark background */
+    z-index: 1000;
+    display: none; /* hidden by default */
+}
+
+/* Popup form box */
+#incomeForm {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 0 20px var(--shadow-color);
+    z-index: 1001;
+    display: none; /* hidden by default */
+}
+
+/* Smooth animation (optional but nice) */
+#incomeForm.visible {
+    animation: fadeIn 0.3s ease forwards;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -45%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+#incomeDetailsForm input,
+#incomeDetailsForm textarea,
+#incomeDetailsForm select {
+    box-sizing: border-box;
+}
+
+#incomeDetailsForm input[type="text"],
+#incomeDetailsForm input[type="number"],
+#incomeDetailsForm input[type="date"],
+#incomeDetailsForm textarea,
+#incomeDetailsForm select {
+    width: 98%;
+    padding: 12px 16px;
+}
+
+#incomeDetailsForm input[type="date"] {
+    padding-right: 40px;
 }

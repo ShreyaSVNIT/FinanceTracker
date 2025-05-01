@@ -4,20 +4,28 @@
 <head>
     <title>FinTech. | Expenses</title>
     <link rel="stylesheet" href="{% static './expense.css' %}">
-    
+    <link rel="stylesheet" href="{% static './edit_form.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <a href="/dashboard"><h1>FinTech.</h1></a>
+    <div class="header">
+        <a href="/dashboard"><h1>FinTech.</h1></a>
+    </div>
 
-
-        <h2 style="color: white;">Update Expense Details</h2>
-        <form id="incomeDetailsForm" action="/edit-expense/{{expense.id}}" method="post">
+    <div class="form-container">
+        <h2 class="form-title">Update Expense Details</h2>
+        <form id="expenseDetailsForm" action="/edit-expense/{{expense.id}}" method="post">
             {% csrf_token %}
-            <div style="text-align: center;color: white;">
-                <label style="font-size: 2em;" for="name">Name: </label>
-                <input style="width: 30em;" type="text" id="name" name="name" value="{{expense.name}}" required><br><br>
-                <label style="font-size: 2em;" for="category">Category: </label>
-                <select  style="width: 30em;height: 3em;" class="custom-select tm-select-accounts" id="category" name="category">
+            <div class="form-message" id="formMessage"></div>
+            
+            <div class="form-group">
+                <label for="name" class="required-field">Name</label>
+                <input type="text" id="name" name="name" value="{{expense.name}}" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category" class="form-control">
                     {% for category in categories %}
                     {% if category == expense.category %}
                     <option value="{{category.id}}" selected>{{category.name}}</option>
@@ -25,21 +33,50 @@
                     <option value="{{category.id}}">{{category.name}}</option>
                     {% endif %}
                     {% endfor %}
-                </select><br><br>
-                
-                <label style="font-size: 2em;" for="amount">Amount: </label>
-                <input  style="width: 30em;" type="number" id="amount" name="amount" value="{{expense.amount}}" required><br><br>
-                
-                <label style="font-size: 2em;" for="date">Date: </label>
-                <input style="width: 30em;" type="date" id="date" name="date" value="{{expense.date}}"><br><br>
-                
-                <label style="font-size: 2em;" for="note">Note: </label>
-                <textarea style="width: 30em;" id="note" name="note" rows="4">{{expense.note}}</textarea><br><br>
-                
+                </select>
             </div>
-            <input style="font-size: 2em;align-self: center;" type="submit" value="Update" >
+            
+            <div class="form-group">
+                <label for="amount" class="required-field">Amount</label>
+                <input type="number" id="amount" name="amount" value="{{expense.amount}}" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="date" class="required-field">Date</label>
+                <input type="date" id="date" name="date" value="{{expense.date}}" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="note">Note</label>
+                <textarea id="note" name="note" class="form-control">{{expense.note}}</textarea>
+            </div>
+            
+            <div class="button-group">
+                <a href="/expenses" class="cancel-btn">Cancel</a>
+                <button type="submit" class="submit-btn">Update</button>
+            </div>
         </form>
+    </div>
+    <script>
+    document.getElementById('expenseDetailsForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('.submit-btn');
+        submitBtn.classList.add('loading');
+        
+        // Form validation feedback will be handled by the server
+        // This is just for the loading state
+        setTimeout(() => {
+            submitBtn.classList.remove('loading');
+        }, 2000);
+    });
 
-    
+    // Show validation messages if they exist in the context
+    {% if messages %}
+        const messageDiv = document.getElementById('formMessage');
+        {% for message in messages %}
+            messageDiv.textContent = "{{ message }}";
+            messageDiv.className = "form-message {{ message.tags }}";
+        {% endfor %}
+    {% endif %}
+    </script>
 </body>
 </html>
